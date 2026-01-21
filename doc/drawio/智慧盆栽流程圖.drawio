@@ -1,0 +1,43 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36" version="29.2.9">
+  <diagram name="第 1 页" id="XSeet2fp8_Q54qObCOD4">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="FNFESxHi8pefQ4yM7pnW-1" edge="1" parent="1" source="ehz0ZLgFYja6EEKctW76-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ehz0ZLgFYja6EEKctW76-2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ehz0ZLgFYja6EEKctW76-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;spacingLeft=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;設定排程&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;（每日早上8點）&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="210" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="FNFESxHi8pefQ4yM7pnW-2" edge="1" parent="1" source="ehz0ZLgFYja6EEKctW76-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ehz0ZLgFYja6EEKctW76-5" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ehz0ZLgFYja6EEKctW76-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;讀取感測器數據&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- 土壤濕度&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- 溫濕度(DHT22)&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- 光照度&lt;/div&gt;" vertex="1">
+          <mxGeometry height="68" width="120" x="210" y="132" as="geometry" />
+        </mxCell>
+        <mxCell id="FNFESxHi8pefQ4yM7pnW-4" edge="1" parent="1" source="ehz0ZLgFYja6EEKctW76-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ehz0ZLgFYja6EEKctW76-10" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ehz0ZLgFYja6EEKctW76-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;將數據存入資料庫&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- 感測器數據&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- 照片檔案路徑&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- 時間&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;戳記&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="64" width="120" x="210" y="316" as="geometry" />
+        </mxCell>
+        <mxCell id="FNFESxHi8pefQ4yM7pnW-3" edge="1" parent="1" source="ehz0ZLgFYja6EEKctW76-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ehz0ZLgFYja6EEKctW76-3" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ehz0ZLgFYja6EEKctW76-5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;div style=&quot;text-align: justify; background-color: rgb(255, 255, 255); font-family: Menlo, Monaco, &amp;quot;Courier New&amp;quot;, monospace; line-height: 18px; white-space: pre;&quot;&gt;嵌入式系統觸發相機&lt;/div&gt;&lt;div style=&quot;text-align: justify; background-color: rgb(255, 255, 255); font-family: Menlo, Monaco, &amp;quot;Courier New&amp;quot;, monospace; line-height: 18px; white-space: pre;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); font-family: Helvetica; text-align: center; white-space: normal;&quot;&gt;-&amp;nbsp;&lt;/span&gt;自拍&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="210" y="224" as="geometry" />
+        </mxCell>
+        <mxCell id="FNFESxHi8pefQ4yM7pnW-5" edge="1" parent="1" source="ehz0ZLgFYja6EEKctW76-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ehz0ZLgFYja6EEKctW76-11" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ehz0ZLgFYja6EEKctW76-10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;AI分析與生成&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- 分析植物狀態&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- 分析訊息&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- 判斷是否需要澆水&lt;/div&gt;" vertex="1">
+          <mxGeometry height="62" width="120" x="210" y="408" as="geometry" />
+        </mxCell>
+        <mxCell id="ehz0ZLgFYja6EEKctW76-11" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;生成Email&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- 感測器數據表格&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- 植物照片附檔&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- AI訊息&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- 各項數據&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="120" x="210" y="500" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
