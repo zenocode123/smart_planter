@@ -2,19 +2,22 @@
 
 結合 **Raspberry Pi 5** 與 **ESP32** 的 AI 智慧盆栽系統。透過語音對話、自動澆水與環境監測，打造有「人格」的植物夥伴。
 
+> **架構特色**：本專案採用 **去中心化網頁架構 (Decentralized Web Architecture)**。每台裝置皆為獨立運作的 Web Server，支援透過 **mDNS** 在區網內自動發現鄰近裝置，無需依賴雲端伺服器。
+
 ## 🛠 技術架構 (Tech Stack)
 
 ### 硬體 (Hardware)
 - **Gateway**: Raspberry Pi 5 (Web Server, AI 運算, 影像處理)
-- **MCU**: ESP32 (感測器讀取, 馬達控制)
+- **MCU**: ESP32 (感測器讀取, 馬達控制, 透過 USB Serial 連接)
 - **Sensors**: 土壤濕度, DHT22 (溫濕度), 光敏電阻, Pi Camera
 
 ### 軟體 (Software)
 - **Backend**: Python 3, FastAPI
-- **Database**: SQLite (輕量化儲存)
-- **Template Engine**: Jinja2 (SSR)
+- **Database**: SQLite (單機輕量化儲存)
+- **Template Engine**: Jinja2 (SSR 伺服器端渲染)
 - **Frontend Interaction**: [htmx](https://htmx.org/) (AJAX/動態更新) + [Alpine.js](https://alpinejs.dev/) (UI 互動)
-- **CSS Framework**: Tailwind CSS / Bootstrap (待定)
+- **CSS Framework**: Tailwind CSS
+- **Service Discovery**: mDNS / Zeroconf (自動發現鄰近裝置)
 - **AI**: Ollama (LLM), Whisper (STT), gTTS/pyttsx3 (TTS)
 
 ---
@@ -30,8 +33,6 @@ cd Desktop
 git clone https://github.com/zenocode123/smart_planter.git
 cd smart_planter
 
-# 先做到這即可(以下可先省略)
----
 # 建立虛擬環境 (建議)
 python -m venv venv
 
