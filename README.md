@@ -25,16 +25,16 @@
 ## 🚀 快速開始 (Quick Start)
 
 ### 1. 環境設定
-請確保你的電腦或 Pi 已安裝 Python 3.10+。
+請確保你的電腦或 Pi 已安裝 Python 3.11+。
 
-```bash
+```zsh
 # Clone 專案
 cd Desktop
 git clone https://github.com/zenocode123/smart_planter.git
 cd smart_planter
 
 # 建立虛擬環境 (建議)
-python -m venv venv
+python -m venv .venv
 
 # 啟動虛擬環境
 # Mac/Linux:
@@ -49,9 +49,9 @@ pip install -r requirements.txt
 ### 2. 啟動伺服器
 ```bash
 # 開發模式 (存檔會自動重啟)
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload
 ```
-瀏覽器打開：`http://localhost:8000`
+瀏覽器打開：`http://localhost:Port`
 
 ---
 
