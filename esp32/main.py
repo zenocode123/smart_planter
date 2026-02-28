@@ -1,27 +1,55 @@
-import dht
-from machine import Pin
-import time
+from machine import Pin, ADC, I2C
+import time 
+import sys  
+from dht import DHT22
+import sm
+from bh1750 import BH1750
+from oled import OledDisplay
+import json
 
-sensor = dht.DHT22(Pin(3))
+i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=100000)
+conf = sm.config()
+dht_sensor = DHT22(Pin(25))
+soil_sensor = ADC(Pin(26))
+light_sensor = BH1750(i2c)
+oled = OledDisplay(i2c=i2c)
 
-print("--- ESP32 DHT22 啟動 ---")
+print("ESP32 Ready. Sending data in JSON format...")
 
 while True:
     try:
-        time.sleep(2)  
-        sensor.measure()
+        dht_sensor.measure()
+        temp = dht_sensor.temperature()
+        hum = dht_sensor.humidity()
+        moisture, raw = sm.read(soil_sensor, conf.get('calibrationAir'), conf.get('calibrationWater'))
+        lux = light_sensor.lux
         
-        t = sensor.temperature()
-        h = sensor.humidity()
+        # format
+        t = round(temp, 1)
+        h = round(hum, 1)
+        m = int(moisture)
+        r = int(raw)
+        l = int(lux)
         
-        # 檢查是否讀到合理的數值
-        if t == 0 and h == 0:
-            print("警告: 讀取到 0，請檢查感測器接線或供電")
-        else:
-            # 這是給你看的格式
-            print(f"目前狀態 -> 溫度: {t}°C, 濕度: {h}%")
-            # 這是保留給未來 FastAPI 機器讀取的格式
-            print(f"DATA:{t},{h}")
+        # display
+        oled.clear()
+        oled.show_text(f"Temp: {t:>5} C", 0, 0)
+        oled.show_text(f"Hum:  {h:>5} %", 0, 16)
+        oled.show_text(f"Soil: {m:>5} %", 0, 32)
+        oled.show_text(f"Lux:  {l:>5} lx", 0, 48)
         
-    except OSError as e:
-        print("Sensor Error: 讀取失敗（OSError），通常是接線斷開或沒接電阻")
+        data = {
+            "temp": t,
+            "hum": h,
+            "moisture": m,
+            "moisture_raw": r,
+            "lux": l
+        }
+        
+        print(json.dumps(data))
+        time.sleep(2)
+    except Exception as e:
+        error_msg = {"error": str(e)}
+        print(json.dumps(error_msg))
+        sys.print_exception(e)
+        time.sleep(2)

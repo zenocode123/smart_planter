@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>智慧盆栽儀表板</title>
+    <!-- 只引入 HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <h1>🌿 智慧盆栽感測器狀態</h1>
+    <hr>
+    
+    <div id="sensor-container">
+        <h3>即時數據：</h3>
+        <!-- HTMX: 每 2 秒自動更新 -->
+        <div hx-get="/sensor-data" 
+             hx-trigger="load, every 2s" 
+             hx-swap="innerHTML">
+            正在載入數據...
+        </div>
+    </div>
+
+    <hr>
+    <p><small>系統狀態：運作中 (純 HTML 模式)</small></p>
+</body>
+</html>

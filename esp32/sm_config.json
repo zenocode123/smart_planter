@@ -1,0 +1,8 @@
+{
+    "calibrationAir": 4095,
+    "calibrationWater": 1500,
+    "step": 60000,
+    "ssid": "",
+    "password": "",
+    "hooks": []
+}

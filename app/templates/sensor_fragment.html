@@ -1,0 +1,6 @@
+<ul>
+    <li><strong>溫度：</strong> {{ data.temp if data.temp is not none else '--' }} °C</li>
+    <li><strong>濕度：</strong> {{ data.hum if data.hum is not none else '--' }} %</li>
+    <li><strong>土壤濕度：</strong> {{ data.moisture if data.moisture is not none else '--' }} %</li>
+    <li><strong>光照強度：</strong> {{ data.lux if data.lux is not none else '--' }} lx</li>
+</ul>
