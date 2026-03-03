@@ -1,6 +1,51 @@
-<ul>
-    <li><strong>溫度：</strong> {{ data.temp if data.temp is not none else '--' }} °C</li>
-    <li><strong>濕度：</strong> {{ data.hum if data.hum is not none else '--' }} %</li>
-    <li><strong>土壤濕度：</strong> {{ data.moisture if data.moisture is not none else '--' }} %</li>
-    <li><strong>光照強度：</strong> {{ data.lux if data.lux is not none else '--' }} lx</li>
-</ul>
+<!-- 
+    感測器數據片段：由 HTMX 每 2 秒請求一次
+    使用了 .data-fade 類別觸發在 base.html 定義的淡入動畫
+-->
+<div class="data-fade">
+    <article id="sensor-card" {% if data.status == 'disconnected' %}style="opacity: 0.6; border-color: #d81b60;"{% endif %}>
+        <header style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>📊 目前感測器狀態</strong>
+            {% if data.status == 'connected' %}
+                <span style="color: #43a047; font-size: 0.8rem;">● 連線中</span>
+            {% else %}
+                <span style="color: #d81b60; font-size: 0.8rem; font-weight: bold;">⚠️ 已斷開連線</span>
+            {% endif %}
+        </header>
+
+        <!-- 
+            Pico CSS 的 Grid：
+            - 在電腦螢幕上會顯示為 2x2
+            - 在手機螢幕上會自動變為 1x4 (垂直堆疊)
+        -->
+        <div class="grid">
+            <div>
+                <small>🌡️ 溫度</small>
+                <p><strong>{{ data.temp if data.temp is not none else '--' }}</strong> °C</p>
+            </div>
+            <div>
+                <small>💧 濕度</small>
+                <p><strong>{{ data.hum if data.hum is not none else '--' }}</strong> %</p>
+            </div>
+            <div>
+                <small>🌱 土壤水分</small>
+                <p><strong>{{ data.moisture if data.moisture is not none else '--' }}</strong> %</p>
+            </div>
+            <div>
+                <small>☀️ 光照強度</small>
+                <p><strong>{{ data.lux if data.lux is not none else '--' }}</strong> lx</p>
+            </div>
+        </div>
+
+        <footer>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <small>最後同步時間：{{ update_time }}</small>
+                {% if data.status == 'connected' %}
+                    <small style="color: #43a047;">✅ 通訊正常</small>
+                {% else %}
+                    <small style="color: #d81b60;">❌ 偵測不到裝置</small>
+                {% endif %}
+            </div>
+        </footer>
+    </article>
+</div>

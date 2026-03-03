@@ -11,12 +11,11 @@
 
 ## 2. 技術棧 (嚴格遵守)
 
-- **程式語言**: Python 3.10+
+- **程式語言**: Python 3.11
 - **後端框架**: **FastAPI** (優先使用異步 `async`)。
 - **樣板引擎**: **Jinja2** (伺服器端渲染 SSR)。
 - **前端互動**:
     - 使用 **htmx** 處理所有伺服器互動（AJAX、局部重新載入）。**禁止**使用 React、Vue 或 Angular。
-    - 使用 **Alpine.js** 處理輕量級用戶端狀態（如：彈窗、下拉選單、分頁標籤）。
 - **資料庫**: **SQLite** (簡單、零配置、單機儲存)。使用 `SQLAlchemy` 或 `Tortoise-ORM`。
 - **硬體通訊**: 樹莓派與 ESP32 之間透過 **USB Serial (UART)** 進行通訊。
 
@@ -32,8 +31,8 @@
     - 針對 htmx 請求，回傳 **HTML 片段 (Fragments)** 而非 JSON。
     - 若需要觸發前端行為，使用 `HX-Trigger` 響應頭。
 
-### 前端 (HTML/Tailwind)
-- **CSS**: 優先使用 Tailwind CSS 實作樣式。
+### 前端 (HTML/CSS)
+- **CSS**: 優先使用原生 CSS 實作樣式。
 - **HTMX 使用**:
     - 善用 `hx-get`, `hx-post`, `hx-target`, `hx-swap`。
     - 範例：`<button hx-post="/water" hx-swap="outerHTML">開始澆水</button>`

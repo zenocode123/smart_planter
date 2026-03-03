@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>🌿 智慧盆栽儀表板</title>
+    
+    <!-- Pico CSS: 極簡、手機版優先 (本地端) -->
+    <link rel="stylesheet" href="/static/css/pico.min.css">
+    
+    <!-- HTMX: 處理局部更新 (本地端) -->
+    <script src="/static/js/htmx.min.js"></script>
+
+    <style>
+        /* 視覺優化：當數據更新時，內容會有一個輕微的淡入動畫 */
+        @keyframes fadeIn {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
+        }
+        .data-fade {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        /* 讓容器更適合手機顯示 */
+        main.container {
+            padding-top: 2rem;
+        }
+
+        /* 標題居中 */
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <header>
+            <hgroup>
+                <h1>🌿 Smart Planter</h1>
+                <p>Raspberry Pi 5 x ESP32 智慧管理系統</p>
+            </hgroup>
+        </header>
+
+        {% block content %}{% endblock %}
+
+        <footer>
+            <small>Powered by FastAPI + HTMX + Pico CSS</small>
+        </footer>
+    </main>
+</body>
+</html>

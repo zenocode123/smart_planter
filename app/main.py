@@ -1,9 +1,11 @@
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from app.serial_reader import reader
 import asyncio
+from datetime import datetime
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -15,6 +17,10 @@ async def lifespan(app: FastAPI):
     await task
 
 app = FastAPI(lifespan=lifespan)
+
+# 掛載靜態檔案資料夾
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
 templates = Jinja2Templates(directory="app/templates")
 
 @app.get("/", response_class=HTMLResponse)
@@ -26,7 +32,10 @@ async def index(request: Request):
 async def get_sensor_data(request: Request):
     """供 HTMX 定期調用的片段"""
     latest_data = reader.get_data()
+    # 獲取目前時間，用於前端驗證數據更新
+    now = datetime.now().strftime("%H:%M:%S")
     return templates.TemplateResponse("sensor_fragment.html", {
         "request": request,
-        "data": latest_data
+        "data": latest_data,
+        "update_time": now
     })

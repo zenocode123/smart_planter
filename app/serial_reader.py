@@ -13,11 +13,12 @@ class ESP32Reader:
         self.port = os.getenv("SERIAL_PORT")
         self.baud = int(os.getenv("BAUD_RATE"))
         # 初始資料全部設為 None
-        self.data: Dict[str, Optional[float]] = {
+        self.data: Dict[str, Any] = {
             "temp": None, 
             "hum": None, 
             "moisture": None, 
-            "lux": None
+            "lux": None,
+            "status": "disconnected" # 新增狀態標記
         }
         self.is_running = False
 
@@ -29,6 +30,7 @@ class ESP32Reader:
                 # timeout 設為 0.1 配合 asyncio.sleep 達成非阻塞
                 with serial.Serial(self.port, self.baud, timeout=0.1) as ser:
                     print(f"✅ Serial 已連線: {self.port}")
+                    self.data["status"] = "connected"
                     while self.is_running:
                         if ser.in_waiting > 0:
                             try:
@@ -36,11 +38,20 @@ class ESP32Reader:
                                 if line.startswith('{'):
                                     new_data = json.loads(line)
                                     self.data.update(new_data)
+                                    self.data["status"] = "connected" # 確保狀態是連線
                             except (json.JSONDecodeError, UnicodeDecodeError):
                                 continue 
                         # 讓出控制權給其他異步任務
                         await asyncio.sleep(0.05) 
             except Exception as e:
+                # 斷線時，重置數據為 None
+                self.data = {
+                    "temp": None, 
+                    "hum": None, 
+                    "moisture": None, 
+                    "lux": None,
+                    "status": "disconnected"
+                }
                 print(f"❌ Serial 連線失敗: {e}，5秒後重試...")
                 await asyncio.sleep(5)
 

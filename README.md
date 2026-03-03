@@ -12,11 +12,10 @@
 - **Sensors**: 土壤濕度, DHT22 (溫濕度), 光敏電阻, Pi Camera
 
 ### 軟體 (Software)
-- **Backend**: Python 3, FastAPI
+- **Backend**: Python 3.11, FastAPI
 - **Database**: SQLite (單機輕量化儲存)
 - **Template Engine**: Jinja2 (SSR 伺服器端渲染)
-- **Frontend Interaction**: [htmx](https://htmx.org/) (AJAX/動態更新) + [Alpine.js](https://alpinejs.dev/) (UI 互動)
-- **CSS Framework**: Tailwind CSS
+- **Frontend Interaction**: [htmx](https://htmx.org/) (AJAX/動態更新)
 - **Service Discovery**: mDNS / Zeroconf (自動發現鄰近裝置)
 - **AI**: Ollama (LLM), Whisper (STT), gTTS/pyttsx3 (TTS)
 
@@ -85,13 +84,17 @@ git push origin <你的分支名稱>  # 推送至 GitHub 開 PR
 ```
 .
 ├── app/
-│   ├── main.py          # FastAPI 入口
-│   ├── routers/         # API 路由
-│   ├── templates/       # Jinja2 HTML 樣板
-│   ├── static/          # CSS, JS, Images
-│   └── database.py      # SQLite 連線設定
-├── hardware/            # ESP32 相關程式碼 (MicroPython/C++)
-├── doc/                 # 專案文件
+│   ├── main.py          # FastAPI 入口 (路由處理)
+│   ├── serial_reader.py # Serial 通訊邏輯
+│   ├── database.py      # SQLite 連線與模型
+│   ├── database.db      # SQLite 資料庫檔案
+│   └── templates/       # Jinja2 HTML 樣板 (htmx 片段)
+├── esp32/               # ESP32 MicroPython 程式碼
+│   ├── main.py          # ESP32 主程式
+│   └── lib/             # 外部函式庫 (BH1750, OLED 等)
+├── docs/                # 專案設計文件與架構圖
+├── .env.example         # 環境變數範例
 ├── requirements.txt     # Python 依賴清單
+├── GEMINI.md            # AI 開發規範
 └── README.md            # 專案說明
 ```
