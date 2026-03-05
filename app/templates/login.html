@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<article style="max-width: 400px; margin: 0 auto; text-align: center;">
+    <h2>登入智慧盆栽系統</h2>
+
+    {% if error_msg %}
+    <div style="color: var(--pico-del-color); margin-bottom: 1rem;">
+        {{ error_msg }}
+    </div>
+    {% endif %}
+
+    {% if msg %}
+    <dialog open id="flash-msg"
+        style="transition: opacity 0.3s ease; z-index: 9999; display: flex; justify-content: center; align-items: center; background-color: rgba(0, 0, 0, 0.5);">
+        {% if '請先登入' in msg %}
+        <!-- 警告風格提示 -->
+        <article
+            style="text-align: center; border: 2px solid #eab308; margin: auto; padding: 2rem 3rem; background-color: var(--pico-background-color); border-radius: 12px; max-width: 400px; width: 90%; box-shadow: 0 4px 15px rgba(234, 179, 8, 0.15);">
+            <h3 style="color: #eab308; margin-bottom: 0; font-size: 1.25rem;">⚠️ {{ msg }}</h3>
+        </article>
+        {% else %}
+        <!-- 成功風格提示 -->
+        <article
+            style="text-align: center; border: 2px solid var(--pico-ins-color); margin: auto; padding: 2rem 3rem; background-color: var(--pico-background-color); border-radius: 12px; max-width: 400px; width: 90%; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h3 style="color: var(--pico-ins-color); margin-bottom: 0; font-size: 1.25rem;">✅ {{ msg }}</h3>
+        </article>
+        {% endif %}
+    </dialog>
+    <script>
+        setTimeout(() => {
+            const msg = document.getElementById('flash-msg');
+            if (msg) {
+                msg.style.opacity = '0';
+                setTimeout(() => msg.remove(), 300);
+            }
+        }, 1000); // 1 秒後開始關閉
+    </script>
+    {% endif %}
+
+    <!-- hx-post 發送請求到 /login，並將回傳結果更新到 #auth-message 區塊內 -->
+    <form hx-post="/login" hx-target="#auth-message" hx-swap="innerHTML">
+        <label for="username">
+            帳號
+            <input type="text" id="username" name="username" required placeholder="輸入帳號">
+        </label>
+
+        <label for="password">
+            密碼
+            <input type="password" id="password" name="password" required placeholder="輸入密碼">
+        </label>
+
+        <!-- 用來顯示錯誤訊息的區塊 -->
+        <div id="auth-message" style="margin-bottom: 1rem;"></div>
+
+        <fieldset style="text-align: left; margin-bottom: 1rem;">
+            <label for="remember_me">
+                <input type="checkbox" id="remember_me" name="remember_me" value="true">
+                記住我 (保持登入)
+            </label>
+        </fieldset>
+
+        <button type="submit">登入</button>
+    </form>
+
+    <p>還沒有帳號嗎？<a href="/register">註冊</a></p>
+</article>
+{% endblock %}

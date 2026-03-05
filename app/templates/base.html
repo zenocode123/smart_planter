@@ -1,22 +1,29 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>🌿 智慧盆栽儀表板</title>
-    
+
     <!-- Pico CSS: 極簡、手機版優先 (本地端) -->
-    <link rel="stylesheet" href="/static/css/pico.min.css">
-    
+    <link rel="stylesheet" href="/static/css/pico.green.min.css">
+
     <!-- HTMX: 處理局部更新 (本地端) -->
     <script src="/static/js/htmx.min.js"></script>
 
     <style>
         /* 視覺優化：當數據更新時，內容會有一個輕微的淡入動畫 */
         @keyframes fadeIn {
-            from { opacity: 0.5; }
-            to { opacity: 1; }
+            from {
+                opacity: 0.5;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
+
         .data-fade {
             animation: fadeIn 0.4s ease-out;
         }
@@ -33,6 +40,7 @@
         }
     </style>
 </head>
+
 <body>
     <main class="container">
         <header>
@@ -49,4 +57,5 @@
         </footer>
     </main>
 </body>
+
 </html>

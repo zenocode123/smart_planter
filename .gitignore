@@ -343,4 +343,11 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
+# Visual Studio Code
+.vscode/
+
 # End of https://www.toptal.com/developers/gitignore/api/python,macos,node
+
+# SQLite temporary files
+database.db-wal
+database.db-shm
