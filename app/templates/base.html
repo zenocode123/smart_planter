@@ -39,16 +39,19 @@
             margin-bottom: 2rem;
         }
     </style>
+    {% block extra_css %}{% endblock %}
 </head>
 
 <body>
     <main class="container">
+        {% block header %}
         <header>
             <hgroup>
                 <h1>🌿 Smart Planter</h1>
                 <p>Raspberry Pi 5 x ESP32 智慧管理系統</p>
             </hgroup>
         </header>
+        {% endblock %}
 
         {% block content %}{% endblock %}
 

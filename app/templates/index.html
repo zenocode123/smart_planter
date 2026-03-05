@@ -1,13 +1,161 @@
 {% extends "base.html" %}
 
-{% block content %}
-<header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-    <div>
-        <strong>Hello, {{ user.username }}</strong>
-    </div>
-    <button class="outline" hx-post="/logout" style="width: auto; padding: 0.5rem 1rem;">登出</button>
-</header>
+{% block extra_css %}
+<style>
+/* Sidebar styling */
+#sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 280px;
+    height: 100vh;
+    background-color: var(--pico-background-color);
+    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    padding: 2rem 1.5rem;
+}
+#sidebar.open {
+    left: 0;
+}
+/* Overlay */
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.5);
+    display: none;
+    z-index: 999;
+    backdrop-filter: blur(3px);
+    transition: opacity 0.3s;
+}
+#overlay.open {
+    display: block;
+}
+/* Plant image container */
+.plant-container {
+    text-align: center;
+    margin-bottom: 2rem;
+    animation: fadeIn 0.8s ease-out;
+}
+.plant-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    max-height: 400px;
+    object-fit: contain;
+    background-color: var(--pico-background-color);
+    padding: 1rem;
+}
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+}
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--pico-h2-color);
+}
+.navbar-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+.hamburger {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    color: var(--pico-color);
+    width: auto;
+    box-shadow: none;
+    transition: transform 0.2s;
+}
+.hamburger:hover {
+    transform: scale(1.05);
+}
+</style>
+{% endblock %}
 
+{% block header %}
+<!-- Navbar -->
+<nav class="navbar">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <button class="hamburger outline secondary" id="hamburger-btn" aria-label="Menu" style="margin: 0; padding: 0.25rem;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <span class="navbar-brand">🌿 Smart Planter</span>
+    </div>
+    <div class="navbar-actions">
+        <span>Hi, <strong>{{ user.username }}</strong></span>
+    </div>
+</nav>
+
+<!-- Sidebar -->
+<div id="overlay"></div>
+<aside id="sidebar">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h3 style="margin: 0;">主選單</h3>
+        <button id="close-btn" class="outline secondary" style="border: none; padding: 0.5rem; width: auto; margin: 0; box-shadow: none;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+    </div>
+    <nav>
+        <ul>
+            <li><a href="/">🏠 儀表板</a></li>
+            <li><a href="#">⚙️ 系統設定</a></li>
+            <li><hr></li>
+            <li>
+                <button class="outline" hx-post="/logout" style="width: 100%; margin-top: 1rem;">🚪 登出</button>
+            </li>
+        </ul>
+    </nav>
+</aside>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const closeBtn = document.getElementById('close-btn');
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            overlay.classList.add('open');
+            document.body.style.overflow = 'hidden'; // 防止背景捲動
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        hamburgerBtn.addEventListener('click', openSidebar);
+        closeBtn.addEventListener('click', closeSidebar);
+        overlay.addEventListener('click', closeSidebar);
+    });
+</script>
+{% endblock %}
+
+{% block content %}
 {% if msg %}
 <dialog open id="flash-msg"
     style="transition: opacity 0.3s ease; z-index: 9999; display: flex; justify-content: center; align-items: center; background-color: rgba(0, 0, 0, 0.5);">
@@ -27,7 +175,13 @@
 </script>
 {% endif %}
 
-<section id="dashboard">
+<section id="dashboard" style="text-align: center;">
+    
+    <!-- Plant Image -->
+    <div class="plant-container">
+        <img src="/static/images/IMG_plant.jpg" alt="Smart Planter Plant">
+    </div>
+
     <!-- 
         HTMX 自動更新機制：
         - hx-get="/sensor-data": 獲取數據片段
@@ -35,7 +189,6 @@
         - hx-swap="innerHTML": 將返回的內容替換到 div 內部
     -->
     <div id="sensor-container" hx-get="/sensor-data" hx-trigger="load, every 2s" hx-swap="innerHTML">
-
         <!-- 初始加載時顯示的進度條 -->
         <article aria-busy="true">
             正在建立與 ESP32 的連線，請稍候...
