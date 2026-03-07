@@ -351,3 +351,6 @@ pyrightconfig.json
 # SQLite temporary files
 database.db-wal
 database.db-shm
+
+# Reviews
+reviews/
