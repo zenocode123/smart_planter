@@ -188,7 +188,7 @@
         - hx-trigger="load, every 2s": 加載時執行，且每 2 秒自動執行一次
         - hx-swap="innerHTML": 將返回的內容替換到 div 內部
     -->
-    <div id="sensor-container" hx-get="/sensor-data" hx-trigger="load, every 2s" hx-swap="innerHTML">
+    <div id="sensor-container" hx-get="/sensor-data" hx-trigger="load, every {{ interval }}s" hx-swap="innerHTML">
         <!-- 初始加載時顯示的進度條 -->
         <article aria-busy="true">
             正在建立與 ESP32 的連線，請稍候...

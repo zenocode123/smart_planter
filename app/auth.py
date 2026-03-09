@@ -77,3 +77,12 @@ async def get_current_user(request: Request):
         )
 
     return user
+
+class NotAuthenticatedHTMX(Exception):
+    pass
+
+async def require_user_htmx(request: Request):
+    try:
+        return await get_current_user(request)
+    except HTTPException:
+        raise NotAuthenticatedHTMX()
