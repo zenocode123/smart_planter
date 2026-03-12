@@ -9,6 +9,7 @@ import os
 from tortoise.contrib.fastapi import register_tortoise
 from app.routers import auth, plants
 from app.auth import NotAuthenticatedHTMX, require_user_htmx
+from app.models import Plant
 from fastapi import status, Depends
 import urllib.parse
 
@@ -48,12 +49,14 @@ async def index(request: Request, user=Depends(require_user_htmx), msg: str = No
     # 此處不再需要使用 try...except 捕捉 HTTPException。
     # 如果使用者未登入，require_user_htmx 預期會拋出 NotAuthenticatedHTMX。
     update_interval = int(os.getenv("SYSTEM_UPDATE_INTERVAL", "5"))
+    plant = await Plant.first()
     return templates.TemplateResponse(
         "index.html", {
             "request": request, 
             "user": user, 
             "msg": msg,
-            "interval": update_interval
+            "interval": update_interval,
+            "plant": plant,
         }
     )
 

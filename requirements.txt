@@ -32,3 +32,4 @@ python-multipart==0.0.22
 rsa==4.9.1
 six==1.17.0
 tortoise-orm==1.1.5
+tzdata==2025.2

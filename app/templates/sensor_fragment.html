@@ -63,7 +63,7 @@
                 🌊 正在自動灌溉中...
             </button>
             {% else %}
-            <button hx-post="/water" hx-target="#sensor-container" hx-swap="innerHTML" {% if data.status !='connected'
+            <button hx-post="/plants/water" hx-target="#sensor-container" hx-swap="innerHTML" {% if data.status !='connected'
                 %}disabled{% endif %} class="contrast" style="width: 100%;">
                 開始手動澆水
             </button>
