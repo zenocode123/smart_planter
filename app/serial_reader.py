@@ -25,15 +25,36 @@ class ESP32Reader:
         self._serial: Optional[serial.Serial] = None
         self._lock = asyncio.Lock()  # 新增鎖，保護 Serial 埠存取
 
+    async def _find_port(self) -> Optional[str]:
+        """找尋可能的序列埠"""
+        # 1. 優先嘗試環境變數設定的埠
+        if self.port and os.path.exists(self.port):
+            return self.port
+        
+        # 2. 自動掃描 /dev/ttyUSB*
+        import serial.tools.list_ports
+        ports = list(serial.tools.list_ports.comports())
+        for p in ports:
+            # 過濾常見的 USB 轉序列晶片描述或名稱
+            if "USB" in p.description or "ttyUSB" in p.device:
+                print(f"🔍 發現可能的裝置: {p.device} ({p.description})")
+                return p.device
+        return None
+
     async def run(self):
-        """背景任務：持續讀取 Serial 數據"""
+        """背景任務：持續讀取 Serial 數據 (具備自動重連與自動偵測功能)"""
         self.is_running = True
         while self.is_running:
             try:
+                # 自動找尋序列埠
+                target_port = await self._find_port()
+                if not target_port:
+                    raise Exception("找不到可用的序列埠 (ESP32 未連接或路徑錯誤)")
+
                 # 建立連線
-                ser = serial.Serial(self.port, self.baud, timeout=0.1)
+                ser = serial.Serial(target_port, self.baud, timeout=0.1)
                 self._serial = ser
-                print(f"✅ Serial 已連線: {self.port}")
+                print(f"✅ Serial 已連線: {target_port}")
                 self.data["status"] = "connected"
                 
                 while self.is_running:
