@@ -120,6 +120,7 @@
     <nav>
         <ul>
             <li><a href="/">🏠 儀表板</a></li>
+            <li><a href="/plants/settings">🌱 植物檔案設定</a></li>
             <li><a href="#">⚙️ 系統設定</a></li>
             <li><hr></li>
             <li>
@@ -179,7 +180,12 @@
     
     <!-- Plant Image -->
     <div class="plant-container">
-        <img src="/static/images/IMG_plant.jpg" alt="Smart Planter Plant">
+        <img src="{{ plant.photo_path if plant and plant.photo_path else '/static/images/IMG_plant.jpg' }}" alt="Smart Planter Plant">
+        <div style="margin-top: 1rem;">
+            <a href="/plants/settings" role="button" class="outline" style="width: auto; display: inline-flex; align-items: center; gap: 0.5rem;">
+                ✏️ 編輯植物檔案
+            </a>
+        </div>
     </div>
 
     <!-- 

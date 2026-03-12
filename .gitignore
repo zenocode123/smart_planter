@@ -354,3 +354,7 @@ database.db-shm
 
 # Reviews
 reviews/
+
+# Smart Planter 專案排除
+*.db
+app/static/uploads/
