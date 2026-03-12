@@ -8,12 +8,14 @@
     <form hx-post="/register" hx-target="#auth-message" hx-swap="innerHTML">
         <label for="username">
             選擇帳號
-            <input type="text" id="username" name="username" required placeholder="輸入新帳號">
+            <input type="text" id="username" name="username" required placeholder="輸入新帳號"
+                oninvalid="this.setCustomValidity('請輸入您的帳號')" oninput="this.setCustomValidity('')">
         </label>
 
         <label for="password">
             選擇密碼
-            <input type="password" id="password" name="password" required placeholder="輸入新密碼">
+            <input type="password" id="password" name="password" required placeholder="輸入新密碼"
+                oninvalid="this.setCustomValidity('請輸入您的密碼')" oninput="this.setCustomValidity('')">
         </label>
 
         <div id="auth-message" style="margin-bottom: 1rem;"></div>

@@ -2,88 +2,195 @@
 
 {% block extra_css %}
 <style>
-/* Sidebar styling */
-#sidebar {
-    position: fixed;
-    top: 0;
-    left: -280px;
-    width: 280px;
-    height: 100vh;
-    background-color: var(--pico-background-color);
-    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
-    padding: 2rem 1.5rem;
-}
-#sidebar.open {
-    left: 0;
-}
-/* Overlay */
-#overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0,0,0,0.5);
-    display: none;
-    z-index: 999;
-    backdrop-filter: blur(3px);
-    transition: opacity 0.3s;
-}
-#overlay.open {
-    display: block;
-}
-/* Plant image container */
-.plant-container {
-    text-align: center;
-    margin-bottom: 2rem;
-    animation: fadeIn 0.8s ease-out;
-}
-.plant-container img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    max-height: 400px;
-    object-fit: contain;
-    background-color: var(--pico-background-color);
-    padding: 1rem;
-}
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 0;
-    margin-bottom: 2rem;
-    border-bottom: 1px solid var(--pico-muted-border-color);
-}
-.navbar-brand {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--pico-h2-color);
-}
-.navbar-actions {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-}
-.hamburger {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0.5rem;
-    display: inline-flex;
-    align-items: center;
-    color: var(--pico-color);
-    width: auto;
-    box-shadow: none;
-    transition: transform 0.2s;
-}
-.hamburger:hover {
-    transform: scale(1.05);
-}
+    /* Sidebar styling */
+    #sidebar {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 280px;
+        height: 100vh;
+        background-color: var(--pico-background-color);
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        padding: 2rem 1.5rem;
+    }
+
+    #sidebar.open {
+        left: 0;
+    }
+
+    /* Overlay */
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        z-index: 999;
+        backdrop-filter: blur(3px);
+        transition: opacity 0.3s;
+    }
+
+    #overlay.open {
+        display: block;
+    }
+
+    /* Dashboard Layout */
+    .dashboard-layout {
+        display: flex;
+        flex-direction: row;
+        gap: 2rem;
+        /* 控制兩個區塊的間距 */
+        align-items: stretch;
+        /* 讓左右欄位等高 */
+        justify-content: center;
+    }
+
+    .plant-column,
+    .sensor-column {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        /* 內容垂直置中 */
+        flex: 1 1 400px;
+        /* 兩欄分配相同權重 */
+        max-width: 450px;
+        /* 兩欄最大寬度相同，保持對稱 */
+        width: 100%;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-layout {
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+    }
+
+    /* Plant image container */
+    .plant-container {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin: 0;
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    .plant-container img {
+        width: 100%;
+        height: auto;
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        /* 稍微柔和陰影 */
+        max-height: 500px;
+        object-fit: cover;
+        /* 改為 cover 滿版 */
+        background-color: var(--pico-background-color);
+        padding: 0;
+        /* 移除留白讓寬度與卡片完全一致 */
+    }
+
+    .navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 0;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid var(--pico-muted-border-color);
+    }
+
+    .navbar-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--pico-h2-color);
+        white-space: nowrap;
+        /* 避免在窄螢幕換行 */
+    }
+
+    .navbar-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        white-space: nowrap;
+        /* 避免在窄螢幕換行 */
+    }
+
+    .hamburger {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        display: inline-flex;
+        align-items: center;
+        color: var(--pico-color);
+        width: auto;
+        box-shadow: none;
+        transition: transform 0.2s;
+    }
+
+    .hamburger:hover {
+        transform: scale(1.05);
+    }
+
+    .sensor-cards-container {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        max-width: 450px;
+        margin: 0;
+        /* 移除 auto 以讓 flex alignment 作用 */
+        gap: 1rem;
+    }
+
+    .sensor-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        width: 100%;
+        border: 1px solid var(--pico-muted-border-color);
+        border-radius: 8px;
+        background-color: var(--pico-background-color);
+        transition: transform 0.2s, box-shadow 0.2s;
+        white-space: nowrap;
+    }
+
+    .sensor-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .sensor-card-label {
+        font-size: 1rem;
+        color: var(--pico-muted-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .sensor-card-icon {
+        font-size: 1.2rem;
+    }
+
+    .sensor-card-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    @keyframes spin {
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .rotating {
+        animation: spin 1s linear infinite;
+    }
 </style>
 {% endblock %}
 
@@ -91,8 +198,10 @@
 <!-- Navbar -->
 <nav class="navbar">
     <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <button class="hamburger outline secondary" id="hamburger-btn" aria-label="Menu" style="margin: 0; padding: 0.25rem;">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <button class="hamburger outline secondary" id="hamburger-btn" aria-label="Menu"
+            style="margin: 0; padding: 0.25rem;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
                 <line x1="3" y1="12" x2="21" y2="12"></line>
                 <line x1="3" y1="6" x2="21" y2="6"></line>
                 <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -101,6 +210,17 @@
         <span class="navbar-brand">🌿 Smart Planter</span>
     </div>
     <div class="navbar-actions">
+        <!-- 手動刷新按鈕 -->
+        <button class="outline secondary" id="manual-refresh-btn"
+            style="margin: 0; padding: 0.25rem; border: none; box-shadow: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--pico-color);"
+            title="立即刷新狀態與感測數據"
+            onclick="const icon = this.querySelector('svg'); icon.classList.add('rotating'); setTimeout(() => icon.classList.remove('rotating'), 1000); htmx.trigger('#sensor-container', 'load');">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l-5.94-5.94" />
+                <path d="M2.5 22v-6h6M2.66 8.43a10 10 0 1 1 .59 9.21l5.94 5.94" />
+            </svg>
+        </button>
         <span>Hi, <strong>{{ user.username }}</strong></span>
     </div>
 </nav>
@@ -110,8 +230,10 @@
 <aside id="sidebar">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
         <h3 style="margin: 0;">主選單</h3>
-        <button id="close-btn" class="outline secondary" style="border: none; padding: 0.5rem; width: auto; margin: 0; box-shadow: none;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <button id="close-btn" class="outline secondary"
+            style="border: none; padding: 0.5rem; width: auto; margin: 0; box-shadow: none;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -121,7 +243,9 @@
         <ul>
             <li><a href="/">🏠 儀表板</a></li>
             <li><a href="#">⚙️ 系統設定</a></li>
-            <li><hr></li>
+            <li>
+                <hr>
+            </li>
             <li>
                 <button class="outline" hx-post="/logout" style="width: 100%; margin-top: 1rem;">🚪 登出</button>
             </li>
@@ -175,24 +299,113 @@
 </script>
 {% endif %}
 
-<section id="dashboard" style="text-align: center;">
-    
-    <!-- Plant Image -->
-    <div class="plant-container">
-        <img src="/static/images/IMG_plant.jpg" alt="Smart Planter Plant">
+<section id="dashboard">
+    <div class="dashboard-layout">
+        <!-- Plant Image (Left Column) -->
+        <div class="plant-column">
+            <div class="plant-container">
+                <img src="/static/images/IMG_plant.jpg" alt="Smart Planter Plant">
+            </div>
+        </div>
+
+        <!-- Sensor Data (Right Column) -->
+        <div class="sensor-column">
+            <!-- 
+                HTMX 自動更新機制：
+                - hx-get="/sensor-data": 獲取數據片段
+                - hx-trigger="load, every 2s": 加載時執行，且每 2 秒自動執行一次
+                - hx-swap="innerHTML": 將返回的內容替換到 div 內部
+            -->
+            <div id="sensor-container" hx-get="/sensor-data" hx-trigger="load, every {{ interval }}s"
+                hx-swap="innerHTML">
+                <!-- 初始加載時顯示的進度條 -->
+                <article aria-busy="true">
+                    正在建立與 ESP32 的連線，請稍候...
+                </article>
+            </div>
+        </div>
     </div>
 
-    <!-- 
-        HTMX 自動更新機制：
-        - hx-get="/sensor-data": 獲取數據片段
-        - hx-trigger="load, every 2s": 加載時執行，且每 2 秒自動執行一次
-        - hx-swap="innerHTML": 將返回的內容替換到 div 內部
-    -->
-    <div id="sensor-container" hx-get="/sensor-data" hx-trigger="load, every {{ interval }}s" hx-swap="innerHTML">
-        <!-- 初始加載時顯示的進度條 -->
-        <article aria-busy="true">
-            正在建立與 ESP32 的連線，請稍候...
-        </article>
-    </div>
+    <!-- Controls & Footer (Full Width Below) -->
+    <div id="dashboard-controls"></div>
 </section>
+
+<!-- Connection Error Modal -->
+<dialog id="disconnect-modal">
+    <article>
+        <header>
+            <strong>⚠️ 裝置連線異常</strong>
+        </header>
+        <p>
+            無法連接至 ESP32 感測設備，是否要立即重試？
+        </p>
+        <footer>
+            <button class="secondary outline" onclick="closeDisconnectModal()"
+                style="margin-right: 1rem; width: auto; display: inline-block;">維持斷線</button>
+            <button
+                onclick="window.isManualRetry = true; htmx.trigger('#sensor-container', 'load'); this.setAttribute('aria-busy', 'true'); this.innerHTML='正在嘗試與設備連線...'; this.setAttribute('disabled', 'true');"
+                id="retry-btn" style="width: auto; display: inline-block;">
+                重新嘗試連線
+            </button>
+        </footer>
+    </article>
+</dialog>
+
+<script>
+    window.disconnectAlertDismissed = false;
+    window.isManualRetry = false; // 用來標記是否為手動發起連線
+
+    // 攔截 htmx 的請求事件 (暫停背景自動輪詢)
+    document.body.addEventListener('htmx:beforeRequest', function (evt) {
+        if (evt.target.id === 'sensor-container') {
+            const modal = document.getElementById('disconnect-modal');
+
+            // 如果是點擊「重新嘗試連線」按鈕觸發的，我們放行，然後立刻重置旗標
+            if (window.isManualRetry) {
+                window.isManualRetry = false;
+                return;
+            }
+
+            // 否則，如果是背景自動發送的，且彈窗開啟中，就攔截它
+            if (modal && modal.open) {
+                evt.preventDefault();
+            }
+        }
+    });
+
+    function checkConnectionStatus(status) {
+        const modal = document.getElementById('disconnect-modal');
+        if (status !== 'connected') {
+            if (!window.disconnectAlertDismissed && !modal.open) {
+                modal.showModal();
+            }
+        } else {
+            // 已連線：充值關閉狀態，並如果視窗開著就關閉它
+            window.disconnectAlertDismissed = false;
+            if (modal.open) {
+                modal.close();
+            }
+        }
+    }
+
+    // 當 HTMX 請求完成時（無論成功與否），將按鈕恢復原狀
+    document.body.addEventListener('htmx:afterOnLoad', function (evt) {
+        if (evt.target.id === 'sensor-container') {
+            const btn = document.getElementById('retry-btn');
+            if (btn) {
+                btn.removeAttribute('aria-busy');
+                btn.removeAttribute('disabled');
+                btn.innerHTML = '重新嘗試連線';
+            }
+        }
+    });
+
+    function closeDisconnectModal() {
+        const modal = document.getElementById('disconnect-modal');
+        if (modal.open) {
+            modal.close();
+        }
+        window.disconnectAlertDismissed = true;
+    }
+</script>
 {% endblock %}
