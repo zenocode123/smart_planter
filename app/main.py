@@ -66,8 +66,8 @@ async def htmx_auth_exception_handler(request: Request, exc: NotAuthenticatedHTM
         return HTMLResponse(
             content="請先登入", 
             status_code=status.HTTP_401_UNAUTHORIZED,
-            headers={"HX-Redirect": "/login"}
+            headers={"HX-Redirect": "/auth/login"}
         )
     else:
-        url = "/login?msg=" + urllib.parse.quote("請先登入")
+        url = "/auth/login?msg=" + urllib.parse.quote("請先登入")
         return RedirectResponse(url=url, status_code=303)

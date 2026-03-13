@@ -10,7 +10,7 @@ from app.auth import (
 )
 from datetime import timedelta
 
-router = APIRouter()
+router = APIRouter(prefix="/auth")
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -90,7 +90,7 @@ async def post_register(
     # 在完成註冊後，引導使用者前往登入頁，帶上 flash message
     import urllib.parse
 
-    redirect_url = "/login?msg=" + urllib.parse.quote("註冊成功！請登入你的新帳號")
+    redirect_url = "/auth/login?msg=" + urllib.parse.quote("註冊成功！請登入你的新帳號")
     resp.headers["HX-Redirect"] = redirect_url
 
     return resp
@@ -103,5 +103,5 @@ async def post_logout():
     """
     resp = HTMLResponse(content="")
     resp.delete_cookie(key="access_token")
-    resp.headers["HX-Redirect"] = "/login"
+    resp.headers["HX-Redirect"] = "/auth/login"
     return resp
