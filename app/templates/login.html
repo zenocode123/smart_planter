@@ -39,7 +39,7 @@
     {% endif %}
 
     <!-- hx-post 發送請求到 /login，並將回傳結果更新到 #auth-message 區塊內 -->
-    <form hx-post="/login" hx-target="#auth-message" hx-swap="innerHTML">
+    <form hx-post="/auth/login" hx-target="#auth-message" hx-swap="innerHTML">
         <label for="username">
             帳號
             <input type="text" id="username" name="username" required placeholder="輸入帳號"
@@ -65,6 +65,6 @@
         <button type="submit">登入</button>
     </form>
 
-    <p>還沒有帳號嗎？<a href="/register">註冊</a></p>
+    <p>還沒有帳號嗎？<a href="/auth/register">註冊</a></p>
 </article>
 {% endblock %}

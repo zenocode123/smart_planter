@@ -5,7 +5,7 @@
     <h2>註冊智慧盆栽系統</h2>
 
     <!-- hx-post 發送請求到 /register -->
-    <form hx-post="/register" hx-target="#auth-message" hx-swap="innerHTML">
+    <form hx-post="/auth/register" hx-target="#auth-message" hx-swap="innerHTML">
         <label for="username">
             選擇帳號
             <input type="text" id="username" name="username" required placeholder="輸入新帳號"
@@ -23,6 +23,6 @@
         <button type="submit">註冊</button>
     </form>
 
-    <p>已經有帳號了嗎？<a href="/login">返回登入</a></p>
+    <p>已經有帳號了嗎？<a href="/auth/login">返回登入</a></p>
 </article>
 {% endblock %}
