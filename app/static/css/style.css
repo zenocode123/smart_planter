@@ -1,0 +1,239 @@
+/* Custom Global Styles for Smart Planter */
+:root {
+    --primary-color: #10b981;
+}
+
+body {
+    transition: background-color 0.3s ease;
+}
+
+/* Sidebar & Overlay */
+#overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+    backdrop-filter: blur(2px);
+    cursor: pointer;
+}
+
+#sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 260px;
+    background-color: var(--pico-background-color);
+    z-index: 9999;
+    padding: 1.5rem;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid var(--pico-muted-border-color);
+    pointer-events: auto;
+    overflow-y: auto;
+}
+
+#sidebar.open {
+    transform: translateX(0);
+}
+
+/* Dashboard Layout */
+.dashboard-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+@media (min-width: 768px) {
+    .dashboard-layout {
+        flex-direction: row;
+        justify-content: center;
+        align-items: stretch;
+        gap: 2rem;
+    }
+}
+
+/* Plant Card */
+.plant-card {
+    width: 100%;
+    max-width: 450px;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--pico-card-background-color);
+    box-shadow: var(--pico-card-box-shadow);
+}
+
+.plant-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+/* Sensor Cards */
+.sensor-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 450px;
+}
+
+.sensor-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background: var(--pico-card-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+}
+
+.sensor-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+/* Settings Page */
+.settings-card {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.photo-upload-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.photo-preview-box {
+    width: 200px;
+    height: 200px;
+    border-radius: 16px;
+    overflow: hidden;
+    background-color: var(--pico-card-background-color);
+    border: 2px dashed var(--pico-muted-border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.3s;
+}
+
+.photo-preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Animations */
+.rotating {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* HTMX Indicator Styling - 防止隱藏時佔用空間 */
+.htmx-indicator {
+    display: none;
+}
+.htmx-request .htmx-indicator {
+    display: block;
+}
+.htmx-request.htmx-indicator {
+    display: block;
+}
+
+/* Settings Actions - 統一按鈕高度與對齊 */
+.settings-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    align-items: stretch; /* 確保高度一致 */
+}
+
+.settings-actions > * {
+    flex: 1;
+    margin: 0 !important; /* 移除 Pico 預設外邊距 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 3rem; /* 固定高度確保對齊 */
+}
+
+/* Smart Navbar Grid - Perfect Balance */
+.nav-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 2rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+}
+
+.nav-left {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.nav-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    white-space: nowrap;
+}
+
+.nav-right {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.nav-btn-icon {
+    background: rgba(0, 0, 0, 0.03) !important; /* 極淡背景定義形狀 */
+    border: none !important;
+    padding: 0.5rem !important;
+    border-radius: 10px !important;
+    color: var(--pico-primary) !important; /* 使用品牌色提升可見度 */
+    transition: all 0.2s ease !important;
+    margin: 0 !important;
+    width: auto !important;
+    box-shadow: none !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+[data-theme="dark"] .nav-btn-icon {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.nav-btn-icon:hover {
+    background: rgba(0, 0, 0, 0.08) !important;
+    transform: scale(1.05); /* Hover 時輕微放大增強反饋 */
+}
+
+[data-theme="dark"] .nav-btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.user-badge {
+    color: var(--pico-muted-color);
+    font-size: 0.85rem;
+    opacity: 0.9;
+}

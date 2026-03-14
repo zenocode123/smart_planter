@@ -1,7 +1,7 @@
 import os
 import uuid
 from pathlib import Path
-from fastapi import APIRouter, Request, Depends, Form, UploadFile, File
+from fastapi import APIRouter, Request, Depends, Form, UploadFile, File, BackgroundTasks
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from app.serial_reader import reader
@@ -9,7 +9,7 @@ from app.models import Plant
 from app.auth import require_user_htmx
 from datetime import datetime, date
 
-router = APIRouter()
+router = APIRouter(prefix="/plants")
 templates = Jinja2Templates(directory="app/templates")
 
 UPDATE_INTERVAL = int(os.getenv("SYSTEM_UPDATE_INTERVAL", "5"))
@@ -25,7 +25,7 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 # 既有路由：感測器資料 & 澆水
 # ───────────────────────────────────────
 
-@router.get("/plants/sensors", response_class=HTMLResponse)
+@router.get("/sensors", response_class=HTMLResponse)
 async def get_sensor_data(request: Request) -> HTMLResponse:
     """供 HTMX 定期調用的感測器數據片段"""
     latest_data = reader.get_data()
@@ -41,7 +41,7 @@ async def get_sensor_data(request: Request) -> HTMLResponse:
     )
 
 
-@router.post("/plants/water", response_class=HTMLResponse)
+@router.post("/water", response_class=HTMLResponse)
 async def water_plant(request: Request, user=Depends(require_user_htmx)) -> HTMLResponse:
     """觸發 ESP32 執行澆水動作"""
     # 2. 發送指令給 ESP32
@@ -56,7 +56,7 @@ async def water_plant(request: Request, user=Depends(require_user_htmx)) -> HTML
 # UC03：植物檔案設定
 # ───────────────────────────────────────
 
-@router.get("/plants/settings", response_class=HTMLResponse)
+@router.get("/settings", response_class=HTMLResponse)
 async def get_plant_settings(request: Request, user=Depends(require_user_htmx)) -> HTMLResponse:
     """[UC03] 顯示植物檔案設定頁面"""
     plant = await Plant.first()
@@ -70,9 +70,22 @@ async def get_plant_settings(request: Request, user=Depends(require_user_htmx)) 
     )
 
 
-@router.post("/plants/settings", response_class=HTMLResponse)
+async def _update_personality_task(plant_id: int, species: str, nickname: str):
+    """背景任務：生成 AI 人格並更新資料庫"""
+    from app.ai.personality import generate_personality
+    from app.models import Plant
+    
+    personality = await generate_personality(species=species, nickname=nickname)
+    if personality:
+        plant = await Plant.get_or_none(id=plant_id)
+        if plant:
+            plant.ai_personality = personality
+            await plant.save()
+
+@router.post("/settings", response_class=HTMLResponse)
 async def post_plant_settings(
     request: Request,
+    background_tasks: BackgroundTasks,
     user=Depends(require_user_htmx),
     nickname: str = Form(...),
     species: str = Form(...),
@@ -106,15 +119,21 @@ async def post_plant_settings(
                 content='<p style="color:var(--pico-del-color);">❌ 日期格式錯誤</p>'
             )
 
-    # ── 取得或建立植物記錄 ──
+    # ── 取得或建立植物記錄（偵測品種變更）──
+    species_changed: bool = False
+    is_new_plant: bool = False
     try:
         plant = await Plant.first()
         if plant:
+            # 記錄舊品種以偵測變更
+            old_species: str = plant.species
+            species_changed = (old_species != species)
             plant.nickname = nickname
             plant.species = species
             plant.planting_date = parsed_date
             await plant.save()
         else:
+            is_new_plant = True
             plant = await Plant.create(
                 nickname=nickname,
                 species=species,
@@ -125,15 +144,24 @@ async def post_plant_settings(
             content=f'<p style="color:var(--pico-del-color);">❌ 儲存失敗：{e}</p>'
         )
 
+    # ── [UC03 Step 6] AI 人格初始化（改為背景任務）──
+    personality_msg: str = ""
+    if species_changed or is_new_plant:
+        # 使用 BackgroundTasks 避免阻塞主流程 (解決 Ollama 500/Timeout 問題)
+        background_tasks.add_task(_update_personality_task, plant.id, species, nickname)
+        personality_msg = "（AI正在進化中...）"
+
     # ── 回傳成功並導回首頁 ──
     import urllib.parse
     resp = HTMLResponse(content="設定成功，正在導向...")
-    redirect_url = "/?msg=" + urllib.parse.quote("🌱 植物檔案設定成功！")
+    flash_msg: str = f"🌱 植物檔案儲存成功！{personality_msg}"
+    redirect_url = "/?msg=" + urllib.parse.quote(flash_msg)
     resp.headers["HX-Redirect"] = redirect_url
     return resp
 
 
-@router.post("/plants/upload-photo", response_class=HTMLResponse)
+
+@router.post("/upload-photo", response_class=HTMLResponse)
 async def upload_plant_photo(
     request: Request,
     user=Depends(require_user_htmx),
@@ -179,47 +207,12 @@ async def upload_plant_photo(
         )
 
     # ── 回傳更新後的照片預覽片段 ──
-    # 我們回傳完整的預覽區塊，包含成功動畫與替換後的按鈕狀態
-    return HTMLResponse(
-        content=f'''
-        <div id="photo-preview" class="photo-preview" style="position: relative;" hx-swap-oob="true">
-            <img src="{relative_path}" alt="植物照片"
-                 style="width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8);">
-            
-            <!-- 成功動畫的勾勾 -->
-            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-                        color: #10B981; font-size: 4rem; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-                        text-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-            </div>
-            
-            <!-- 大約 2 秒後移除變暗效果與勾勾，並恢復原狀 -->
-            <script>
-                setTimeout(() => {{
-                    const previewObj = document.getElementById("photo-preview");
-                    if(previewObj) {{
-                        const img = previewObj.querySelector("img");
-                        const icon = previewObj.querySelector("div");
-                        if(img) img.style.filter = "none";
-                        if(icon) icon.remove();
-                    }}
-                }}, 2000);
-            </script>
-        </div>
-        
-        <!-- 更新按鈕文字為「更換照片」 -->
-        <button type="button" id="upload-btn" class="outline secondary" style="width: auto; opacity: 0.8;" hx-swap-oob="true"
-                onclick="document.getElementById('photo-input').click();">
-            🔄 更換照片
-        </button>
-
-        <!-- Toast 訊息通知 -->
-        <div id="photo-message" hx-swap-oob="true">
-            <script>
-                showToast("✅ 照片上傳成功", "success");
-            </script>
-        </div>
-        '''
+    # 使用獨立範本回傳 OOB 更新，保持 Python 代碼純淨
+    return templates.TemplateResponse(
+        "photo_upload_fragment.html",
+        {
+            "request": request,
+            "photo_url": relative_path,
+        },
     )
+
