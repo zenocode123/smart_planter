@@ -30,3 +30,17 @@ class Plant(models.Model):
 
     def __str__(self) -> str:
         return f"Plant({self.nickname}, {self.species})"
+
+
+class ChatMessage(models.Model):
+    """對話紀錄模型"""
+    id = fields.IntField(pk=True)
+    role = fields.CharField(max_length=20, description="角角色 (user/assistant)")
+    content = fields.TextField(description="對話內容")
+    created_at = fields.DatetimeField(auto_now_add=True)
+
+    class Meta:
+        table = "chat_messages"
+
+    def __str__(self) -> str:
+        return f"{self.role}: {self.content[:20]}..."

@@ -1,0 +1,27 @@
+{% if user_msg %}
+<!-- 使用者訊息片段 -->
+<div class="message-bubble user">
+    <div class="bubble-content">{{ user_msg.content }}</div>
+</div>
+{% endif %}
+
+{% if is_placeholder %}
+<!-- AI 思考中佔位符 (將自動觸發背景推理) -->
+<div hx-post="/chat/generate/{{ user_msg.id }}" 
+     hx-trigger="load" 
+     hx-swap="outerHTML"
+     hx-disabled-elt="#chat-send-btn, .chat-input">
+    <div class="message-bubble assistant">
+        <div class="bubble-content thinking">
+            <span>.</span><span>.</span><span>.</span>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if ai_msg %}
+<!-- 最終的 AI 回覆片段 -->
+<div class="message-bubble assistant">
+    <div class="bubble-content">{{ ai_msg.content }}</div>
+</div>
+{% endif %}
