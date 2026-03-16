@@ -1,0 +1,43 @@
+<!-- Photo Upload Result Fragment (HTMX OOB) -->
+
+<div id="photo-preview" class="photo-preview-box" style="position: relative;" hx-swap-oob="true">
+    <img src="{{ photo_url }}" alt="植物照片"
+         style="width: 100%; height: 100%; object-fit: cover; filter: brightness(0.8);">
+    
+    <!-- 成功動畫的勾勾 -->
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+                color: #10B981; font-size: 4rem; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+                text-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+    </div>
+    
+    <!-- 視覺回饋：延遲移除變暗效果 -->
+    <script>
+        setTimeout(() => {
+            const previewObj = document.getElementById("photo-preview");
+            if(previewObj) {
+                const img = previewObj.querySelector("img");
+                const icon = previewObj.querySelector("div");
+                if(img) img.style.filter = "none";
+                if(icon) icon.remove();
+            }
+        }, 2000);
+    </script>
+</div>
+
+<!-- 更新按鈕文字為「更換照片」 (OOB) -->
+<button type="button" id="upload-btn" class="outline secondary" style="width: auto; opacity: 0.8;" hx-swap-oob="true"
+        onclick="document.getElementById('photo-input').click();">
+    🔄 更換照片
+</button>
+
+<!-- Toast 訊息通知 (OOB) -->
+<div id="photo-message" hx-swap-oob="true">
+    <script>
+        if (typeof showToast === 'function') {
+            showToast("✅ 照片上傳成功", "success");
+        }
+    </script>
+</div>

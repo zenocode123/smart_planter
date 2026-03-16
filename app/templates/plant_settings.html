@@ -1,204 +1,74 @@
 {% extends "base.html" %}
 
-{% block extra_css %}
-<style>
-/* ── 設定頁面專用 ── */
-.settings-card {
-    max-width: 600px;
-    margin: 0 auto;
-    animation: fadeIn 0.5s ease-out;
-}
-
-.photo-upload-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.photo-preview {
-    width: 200px;
-    height: 200px;
-    border-radius: 16px;
-    overflow: hidden;
-    background-color: var(--pico-card-background-color);
-    border: 2px dashed var(--pico-muted-border-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.3s;
-}
-.photo-preview:hover {
-    border-color: var(--pico-primary);
-}
-.photo-preview img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.photo-placeholder {
-    text-align: center;
-    color: var(--pico-muted-color);
-    font-size: 3rem;
-}
-
-.form-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin-top: 1.5rem;
-}
-.form-actions button,
-.form-actions a[role="button"] {
-    flex: 1;
-    max-width: 200px; /* 防止過度拉長 */
-    padding: 0.75rem 1rem; /* 確保高度一致 */
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.page-title {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-.page-title h2 {
-    margin-bottom: 0.25rem;
-}
-.page-title p {
-    color: var(--pico-muted-color);
-    margin: 0;
-}
-
-/* 建議品種 datalist 的樣式保持原生即可 */
-
-</style>
-{% endblock %}
-
-{% block header %}
-<!-- Navbar -->
-<nav class="navbar">
-    <div style="display: flex; align-items: center; gap: 0.75rem;">
-        <button class="hamburger outline secondary" id="hamburger-btn" aria-label="Menu" style="margin: 0; padding: 0.25rem;">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
-        </button>
-        <span class="navbar-brand">🌿 Smart Planter</span>
-    </div>
-    <div class="navbar-actions">
-        <span>Hi, <strong>{{ user.username }}</strong></span>
-    </div>
-</nav>
-
-<!-- Sidebar -->
-<div id="overlay"></div>
-<aside id="sidebar">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-        <h3 style="margin: 0;">主選單</h3>
-        <button id="close-btn" class="outline secondary" style="border: none; padding: 0.5rem; width: auto; margin: 0; box-shadow: none;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-        </button>
-    </div>
-    <nav>
-        <ul>
-            <li><a href="/">🏠 儀表板</a></li>
-            <li><a href="/plants/settings" class="secondary"><strong>🌱 植物檔案設定</strong></a></li>
-            <li><a href="#">⚙️ 系統設定</a></li>
-            <li><hr></li>
-            <li>
-                <button class="outline" hx-post="/logout" style="width: 100%; margin-top: 1rem;">🚪 登出</button>
-            </li>
-        </ul>
-    </nav>
-</aside>
-
-{% endblock %}
-
 {% block content %}
 <section class="settings-card">
-
-    <!-- 頁面標題 -->
-    <div class="page-title">
-        <h2>🌱 植物檔案設定</h2>
-        <p>設定你的植物基本資訊，讓 AI 能提供更好的照顧建議</p>
+    <div class="page-title" style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="margin: 0;">🌱 植物檔案設定</h2>
+        <p style="color: var(--pico-muted-color);">設定基本的植物資訊，讓系統提供更好的建議</p>
     </div>
 
     <article>
         <!-- 照片上傳區域 -->
         <div class="photo-upload-area">
-            <div class="photo-preview" id="photo-preview">
+            <div class="photo-preview-box" id="photo-preview">
                 {% if plant and plant.photo_path %}
-                <img src="{{ plant.photo_path }}" alt="植物照片">
+                <img src="{{ plant.photo_path }}" alt="Plant Photo">
                 {% else %}
-                <div class="photo-placeholder">🌿</div>
+                <span style="font-size: 3rem;">🌿</span>
                 {% endif %}
             </div>
+            
             <form hx-post="/plants/upload-photo"
                   hx-target="#photo-preview"
                   hx-swap="innerHTML"
-                  hx-encoding="multipart/form-data"
-                  style="text-align: center;">
+                  hx-encoding="multipart/form-data">
                 <input type="file" name="photo" id="photo-input" accept=".jpg,.jpeg,.png,.webp"
                        style="display: none;"
-                       onchange="this.closest('form').requestSubmit();">
+                       @change="$el.closest('form').requestSubmit()">
                 <button type="button" id="upload-btn" class="outline secondary" style="width: auto;"
-                        onclick="document.getElementById('photo-input').click();">
+                        @click="document.getElementById('photo-input').click()">
                     📷 上傳照片
                 </button>
-                <div id="photo-message" style="margin-top: 0.5rem;"></div>
             </form>
         </div>
 
         <hr>
 
         <!-- 植物資料表單 -->
-        <form hx-post="/plants/settings"
-              hx-target="#form-message"
-              hx-swap="innerHTML">
-
-            <!-- 植物暱稱 -->
+        <form hx-post="/plants/settings" hx-target="#form-message"
+              hx-indicator="#save-loading" hx-disabled-elt="#save-btn">
             <label for="nickname">
                 植物暱稱 <small style="color: var(--pico-del-color);">*必填</small>
-                <input type="text" id="nickname" name="nickname"
-                       placeholder="例如：小綠、阿花"
-                       value="{{ plant.nickname if plant else '' }}"
-                       required maxlength="50">
+                <input type="text" id="nickname" name="nickname" value="{{ plant.nickname if plant else '' }}" required>
             </label>
 
-            <!-- 植物品種 -->
             <label for="species">
                 植物品種 <small style="color: var(--pico-del-color);">*必填</small>
-                <input type="text" id="species" name="species"
-                       placeholder="例如：黃金葛、仙人掌"
-                       value="{{ plant.species if plant else '' }}"
-                       required maxlength="100">
+                <input type="text" id="species" name="species" value="{{ plant.species if plant else '' }}" required>
             </label>
 
-            <!-- 種植日期 -->
             <label for="planting_date">
-                種植日期 <small style="color: var(--pico-muted-color);">（選填）</small>
+                種植日期 <small>（選填）</small>
                 <input type="date" id="planting_date" name="planting_date"
                        value="{{ plant.planting_date.isoformat() if plant and plant.planting_date else '' }}">
             </label>
 
-            <!-- 錯誤/成功訊息區 -->
             <div id="form-message" style="margin: 1rem 0;"></div>
 
-            <!-- 按鈕 -->
-            <div class="form-actions">
+            <!-- Loading 指示器（HTMX 自動控制顯示/隱藏）-->
+            <div id="save-loading" class="htmx-indicator" style="text-align: center; padding: 1rem;">
+                <progress indeterminate style="max-width: 200px;"></progress>
+                <p style="margin: 0.5rem 0 0; opacity: 0.7; font-size: 0.9rem;">
+                    🧠 正在儲存並生成 AI 人格，請稍候...
+                </p>
+            </div>
+
+            <div class="settings-actions">
                 <a href="/" role="button" class="outline secondary">取消</a>
-                <button type="submit">💾 儲存設定</button>
+                <button type="submit" id="save-btn">💾 儲存設定</button>
             </div>
         </form>
     </article>
 </section>
 {% endblock %}
+

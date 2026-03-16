@@ -1,68 +1,113 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" x-data="appState">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>🌿 智慧盆栽儀表板</title>
+    <title>🍃 Smart Planter</title>
 
-    <!-- Pico CSS: 極簡、手機版優先 (本地端) -->
+    <!-- Pico CSS -->
     <link rel="stylesheet" href="/static/css/pico.green.min.css">
+    <!-- Global Styles -->
+    <link rel="stylesheet" href="/static/css/style.css">
 
-    <!-- 自訂共用 Layout -->
-    <link rel="stylesheet" href="/static/css/layout.css">
-
-    <!-- HTMX: 處理局部更新 (本地端) -->
+    <!-- Scripts -->
     <script src="/static/js/htmx.min.js"></script>
-    <script src="/static/js/layout.js" defer></script>
+    <script src="/static/js/alpine.min.js" defer></script>
+    <script src="/static/js/app.js"></script>
 
-    <style>
-        /* 視覺優化：當數據更新時，內容會有一個輕微的淡入動畫 */
-        @keyframes fadeIn {
-            from {
-                opacity: 0.5;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        .data-fade {
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        /* 讓容器更適合手機顯示 */
-        main.container {
-            padding-top: 2rem;
-        }
-
-        /* 標題居中 */
-        header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-    </style>
     {% block extra_css %}{% endblock %}
 </head>
 
 <body>
+
+    <!-- Sidebar Component (Only for Logged-in Users) -->
+    {% if user %}
+    <div id="overlay" x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false" style="display: none;"></div>
+    <aside id="sidebar" :class="sidebarOpen ? 'open' : ''">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--pico-muted-border-color); padding-bottom: 1rem;">
+            <h3 style="margin: 0; font-size: 1.25rem;">主選單</h3>
+            <button @click="sidebarOpen = false" class="outline secondary" style="border: none; padding: 0.5rem; width: auto; margin: 0; box-shadow: none;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <nav>
+            <ul style="display: block;">
+                <li><a href="/" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">🏠 首頁</a></li>
+                <li><a href="/plants/settings" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">🌱 植物設定</a></li>
+                <li><a href="#" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">⚙️ 系統設定</a></li>
+                <li><hr style="margin: 1rem 0;"></li>
+                <li>
+                    <button class="outline" hx-post="/auth/logout" style="width: 100%; margin-top: 1rem;">🚪 登出</button>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+    {% endif %}
+
     <main class="container">
         {% block header %}
-        <header>
-            <hgroup>
-                <h1>🌿 Smart Planter</h1>
-                <p>Raspberry Pi 5 x ESP32 智慧管理系統</p>
-            </hgroup>
-        </header>
+        <nav class="nav-grid">
+            <!-- Left Side -->
+            <div class="nav-left">
+                <button @click="sidebarOpen = true" class="nav-btn-icon" 
+                        style="{% if not user %}visibility: hidden; pointer-events: none;{% endif %}"
+                        aria-label="開啟選單">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <!-- Center Side (Absolute Physical Center) -->
+            <div class="nav-center">
+                <strong style="font-size: 1.25rem; letter-spacing: -0.5px;">🍃 Smart Planter</strong>
+            </div>
+
+            <!-- Right Side -->
+            <div class="nav-right">
+                {% if user %}
+                <span class="user-badge">Hi, <strong>{{ user.username }}</strong></span>
+                {% else %}
+                <span class="user-badge" style="font-size: 0.75rem;">Guest</span>
+                {% endif %}
+            </div>
+        </nav>
         {% endblock %}
 
-        {% block content %}{% endblock %}
-
-        <footer>
-            <small>Powered by FastAPI + HTMX + Pico CSS</small>
-        </footer>
+        <div class="fade-in">
+            {% block content %}{% endblock %}
+        </div>
     </main>
+
+    {% if user %}
+    <!-- 全域元件：放置於 Body 底層以降噪並確保定位精準 -->
+    <div id="global-ui-root" x-cloak>
+        <!-- 澆水 Overlay (採用絕對置中方案) -->
+        <div x-show="watering" x-transition.opacity 
+             style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 9999;">
+            <article style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; border: 1px solid var(--pico-ins-color); padding: 2.5rem; max-width: 90%; width: 350px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border-radius: 20px; background: var(--pico-card-background-color); margin: 0;">
+                <header style="border: none; background: transparent; padding: 0;">
+                    <h3 style="color: var(--pico-ins-color); margin: 0;">💧 正在灌溉中</h3>
+                </header>
+                <p style="margin: 1.5rem 0; opacity: 0.8;">ESP32 正在執行指令，請稍候</p>
+                <progress indeterminate></progress>
+            </article>
+        </div>
+
+        <!-- 斷線提醒 Modal -->
+        <dialog :open="disconnectModal">
+            <article>
+                <header>
+                    <h3 style="color: var(--pico-del-color); margin: 0;">⚠️ 裝置連線中斷</h3>
+                </header>
+                <p>無法與 ESP32 建立通訊，請檢查硬體連接或重啟系統。</p>
+                <footer>
+                    <button class="secondary" @click="dismissDisconnect()">暫時忽略</button>
+                    <button @click="triggerRefresh()">重新整理</button>
+                </footer>
+            </article>
+        </dialog>
+    </div>
+    {% endif %}
 </body>
 
 </html>

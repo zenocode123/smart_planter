@@ -21,6 +21,7 @@ class Plant(models.Model):
     species = fields.CharField(max_length=100, description="植物品種（必填）")
     planting_date = fields.DateField(null=True, description="種植日期")
     photo_path = fields.CharField(max_length=255, null=True, description="照片檔案路徑")
+    ai_personality = fields.TextField(null=True, description="AI 人格 System Prompt（由品種自動生成）")
     created_at = fields.DatetimeField(auto_now_add=True)
     updated_at = fields.DatetimeField(auto_now=True)
 

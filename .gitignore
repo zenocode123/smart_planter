@@ -357,3 +357,6 @@ reviews/
 *.db-wal
 *.db-shm
 app/static/uploads/
+
+# 忽略所有技能
+.agent/skills/*

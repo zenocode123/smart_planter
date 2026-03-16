@@ -1,96 +1,36 @@
-<div id="sensor-fragment">
-    <!-- 1. 彈窗邏輯：只要 ESP32 回報 watering 為 true，就顯示彈窗 -->
-    {% if data.watering %}
-    <dialog open id="watering-modal">
-        <article>
-            <header>
-                <strong>🌊 正在執行自動灌溉</strong>
-            </header>
-            <p>
-                ESP32 偵測到水泵運作中，請稍候...
-            </p>
-            <progress indeterminate></progress>
-            <footer>
-                <small>硬體停止運作後，此視窗將自動關閉</small>
-            </footer>
-        </article>
-    </dialog>
-    {% endif %}
+<div id="sensor-data-wrapper">
+    <!-- 狀態同步：確保 Alpine.js 全域狀態與伺服器數據一致 -->
+    <div x-init="checkConnection('{{ data.status }}')" x-effect="watering = {{ 'true' if data.watering else 'false' }}"></div>
 
-    <!-- 2. 改為垂直排列的數據卡片區域 -->
     <div class="sensor-cards-container">
         <div class="sensor-card">
-            <div class="sensor-card-label">
-                <span class="sensor-card-icon">🌡️</span> 溫度
-            </div>
-            <div class="sensor-card-value">
-                {{ data.temp if data.temp is not none else '--' }} <small>°C</small>
-            </div>
+            <span>🌡️ 溫度</span>
+            <span class="sensor-value">{{ data.temp if data.temp is not none else '--' }} <small>°C</small></span>
         </div>
         <div class="sensor-card">
-            <div class="sensor-card-label">
-                <span class="sensor-card-icon">💧</span> 濕度
-            </div>
-            <div class="sensor-card-value">
-                {{ data.hum if data.hum is not none else '--' }} <small>%</small>
-            </div>
+            <span>💧 濕度</span>
+            <span class="sensor-value">{{ data.hum if data.hum is not none else '--' }} <small>%</small></span>
         </div>
         <div class="sensor-card">
-            <div class="sensor-card-label">
-                <span class="sensor-card-icon">🌱</span> 土壤濕度
-            </div>
-            <div class="sensor-card-value"
-                style="color: {{ 'var(--pico-secondary)' if data.moisture and data.moisture < 30 else 'inherit' }};">
+            <span>🌱 土壤濕度</span>
+            <span class="sensor-value" :style="'color: {{ 'var(--pico-secondary)' if data.moisture and data.moisture < 30 else 'inherit' }}'">
                 {{ data.moisture if data.moisture is not none else '--' }} <small>%</small>
-            </div>
+            </span>
         </div>
         <div class="sensor-card">
-            <div class="sensor-card-label">
-                <span class="sensor-card-icon">☀️</span> 光照
-            </div>
-            <div class="sensor-card-value">
-                {{ data.lux if data.lux is not none else '--' }} <small>lx</small>
-            </div>
+            <span>☀️ 光照</span>
+            <span class="sensor-value">{{ data.lux if data.lux is not none else '--' }} <small>lx</small></span>
         </div>
     </div>
 
-    <!-- 3. 按鈕區域與頁尾 (OOB Swap 到下方) -->
+    <!-- 狀態資訊 (Footer OOB) -->
     <div id="dashboard-controls" hx-swap-oob="true">
-        <div style="margin-top: 1.5rem; max-width: 800px; margin-left: auto; margin-right: auto;">
-            {% if data.watering %}
-            <button class="secondary" disabled
-                style="width: 100%; border: none; background-color: var(--pico-ins-color);">
-                🌊 正在自動灌溉中...
-            </button>
-            {% else %}
-            <button hx-post="/plants/water" hx-target="#sensor-container" hx-swap="innerHTML" {% if data.status !='connected'
-                %}disabled{% endif %} class="contrast" style="width: 100%;">
-                開始手動澆水
-            </button>
-            {% endif %}
-        </div>
-
-        <footer style="margin-top: 1rem; max-width: 800px; margin-left: auto; margin-right: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <small>最後同步時間：{{ update_time }}</small>
-                <div>
-                    {% if data.status == 'connected' %}
-                    <span
-                        style="display: inline-block; width: 8px; height: 8px; background-color: #4CAF50; border-radius: 50%; margin-right: 5px;"></span>
-                    <small style="color: #4CAF50;">ESP32 已連線</small>
-                    {% else %}
-                    <span
-                        style="display: inline-block; width: 8px; height: 8px; background-color: #f44336; border-radius: 50%; margin-right: 5px;"></span>
-                    <small style="color: #f44336;">ESP32 斷線</small>
-                    {% endif %}
-                </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; opacity: 0.8;">
+            <small>最後更新：{{ update_time }}</small>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <small :style="'color: ' + (isConnected ? '#3b82f6' : '#ef4444')" 
+                       x-text="isConnected ? 'ESP32連線中' : 'ESP32已斷線'"></small>
             </div>
-        </footer>
+        </div>
     </div>
 </div>
-
-<script>
-    if (typeof checkConnectionStatus === 'function') {
-        checkConnectionStatus('{{ data.status }}');
-    }
-</script>
