@@ -6,16 +6,27 @@
 
     <form hx-post="/auth/register" hx-target="#auth-message" hx-swap="innerHTML">
         <label for="username">
-            選擇帳號
-            <input type="text" id="username" name="username" required placeholder="輸入新帳號">
+            顯示名稱 (Username)
+            <input type="text" id="username" name="username" required placeholder="例如：綠手指小明">
+        </label>
+
+        <label for="email">
+            Gmail 帳號
+            <input type="email" id="email" name="email" required placeholder="yourname@gmail.com">
+        </label>
+
+        <label for="gmail_app_password">
+            Gmail 應用程式密碼
+            <input type="password" id="gmail_app_password" name="gmail_app_password" required placeholder="16 位數應用程式密碼">
+            <small><a href="https://myaccount.google.com/apppasswords" target="_blank">如何取得？</a></small>
         </label>
 
         <label for="password">
-            選擇密碼
+            設定登入密碼 (System Password)
             <input type="password" id="password" name="password" required placeholder="輸入新密碼">
         </label>
 
-        <div id="auth-message" style="margin-bottom: 1rem;"></div>
+        <div id="auth-message" style="margin-top: 1rem; margin-bottom: 1rem;"></div>
 
         <button type="submit">完成註冊</button>
     </form>

@@ -9,6 +9,7 @@ from app.auth import (
     ACCESS_TOKEN_EXPIRE_SECONDS,
 )
 from datetime import timedelta
+from app.logic.security import secret_manager
 
 router = APIRouter(prefix="/auth")
 templates = Jinja2Templates(directory="app/templates")
@@ -26,17 +27,17 @@ async def post_login(
     password: str = Form(...),
     remember_me: bool = Form(False),
 ):
-    user = await User.get_or_none(username=username)
+    user = await User.get_or_none(email=username)  # 前端傳來的 username 欄位現在填的是 email
     if not user or not verify_password(password, user.hashed_password):
-        # 帳號或密碼錯誤：回傳一段紅色的 HTML 錯誤訊息給 HTMX 掛載到表單裡
+        # 帳號或密碼錯誤
         return HTMLResponse(
-            content='<span style="color:var(--pico-del-color);">❌ 帳號或密碼錯誤</span>'
+            content='<span style="color:var(--pico-del-color);">❌ Email 或密碼錯誤</span>'
         )
 
     # 成功登入
     access_token_expires = timedelta(seconds=ACCESS_TOKEN_EXPIRE_SECONDS)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": user.email}, expires_delta=access_token_expires
     )
 
     resp = HTMLResponse(content="登入成功，正在導向...")
@@ -73,17 +74,39 @@ async def post_register(
     request: Request,
     username: str = Form(...),
     password: str = Form(...),
+    email: str = Form(...),
+    gmail_app_password: str = Form(...),
 ):
-    # 檢查是否已存在該帳號
-    user = await User.get_or_none(username=username)
+    # 檢查是否已存在該 Email
+    user = await User.get_or_none(email=email)
     if user:
         return HTMLResponse(
-            content='<span style="color:var(--pico-del-color);">❌ 此帳號已經有人使用</span>'
+            content='<span style="color:var(--pico-del-color);">❌ 此 Email 已經註冊過</span>'
         )
+
+    # 加密 Gmail 應用程式密碼
+    encrypted_gmail_pw = secret_manager.encrypt(gmail_app_password)
 
     # 新增 User
     hashed_pw = get_password_hash(password)
-    new_user = await User.create(username=username, hashed_password=hashed_pw)
+    new_user = await User.create(
+        username=username, 
+        email=email,
+        hashed_password=hashed_pw,
+        gmail_app_password=encrypted_gmail_pw
+    )
+
+    # 動態配發預設植物 (預設使用 planter_01)
+    from app.models import Plant
+    import uuid
+    existing_plant = await Plant.get_or_none(mqtt_topic_id="planter_01")
+    topic_id = "planter_01" if not existing_plant else f"planter_{uuid.uuid4().hex[:4]}"
+    await Plant.create(
+        user=new_user,
+        nickname="我的第一盆植物",
+        species="溫室植物",
+        mqtt_topic_id=topic_id
+    )
 
     resp = HTMLResponse(content="註冊成功，請登入...")
 

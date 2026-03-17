@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from app.auth import require_user_htmx
 from app.models import Plant, ChatMessage
-import httpx
+from openai import OpenAI
 import os
 import logging
 
@@ -11,14 +11,46 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 templates = Jinja2Templates(directory="app/templates")
 logger = logging.getLogger(__name__)
 
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2:0.5b")
+# Nvidia NIM 設定
+NVIDIA_NIM_API_KEY = os.getenv("NVIDIA_NIM_API_KEY")
+NVIDIA_MODEL_NAME = os.getenv("NVIDIA_MODEL_NAME")
+NVIDIA_NIM_BASE_URL = os.getenv("NVIDIA_NIM_BASE_URL")
+
+def get_ai_client():
+    if not NVIDIA_NIM_API_KEY or not NVIDIA_NIM_BASE_URL:
+        return None
+    return OpenAI(
+      base_url=NVIDIA_NIM_BASE_URL,
+      api_key=NVIDIA_NIM_API_KEY
+    )
+
+from app.ai.prompts import get_chat_system_prompt, with_retry_sync
+
+@with_retry_sync(max_retries=3)
+def _call_nvidia_nim_for_chat(messages_payload: list) -> str:
+    """內部函式：受 Retry 保護的 AI 聊天呼叫"""
+    client = get_ai_client()
+    if not client:
+        raise ValueError("NVIDIA_NIM_API_KEY 未設定")
+        
+    response = client.chat.completions.create(
+        model=NVIDIA_MODEL_NAME,
+        messages=messages_payload,
+        temperature=0.7,
+        max_tokens=256,
+        top_p=0.7
+    )
+    return response.choices[0].message.content.strip()
 
 @router.get("/", response_class=HTMLResponse)
 async def get_chat_page(request: Request, user=Depends(require_user_htmx)):
-    """顯示對話頁面並加載歷史紀錄"""
-    messages = await ChatMessage.all().order_by("created_at")
+    """顯示對話頁面並加載歷史紀錄 (依據特定植物)"""
     plant = await Plant.first()
+    if plant:
+        messages = await ChatMessage.filter(plant=plant).order_by("created_at")
+    else:
+        messages = []
+        
     return templates.TemplateResponse("chat.html", {
         "request": request,
         "user": user,
@@ -37,8 +69,9 @@ async def post_chat_message(
     if not message:
         return HTMLResponse(content="")
 
-    # 1. 直接儲存使用者訊息
-    user_msg = await ChatMessage.create(role="user", content=message)
+    # 1. 直接儲存使用者訊息，並明確綁定到特定植物
+    plant = await Plant.first()
+    user_msg = await ChatMessage.create(plant=plant, role="user", content=message)
 
     # 2. 回傳使用者片段與 AI 思考中的「自動觸發」佔位符
     return templates.TemplateResponse("chat_fragment.html", {
@@ -66,10 +99,11 @@ async def generate_chat_response(
         nickname = plant.nickname if plant and plant.nickname else "小植"
         base_personality = f"你是一株名為「{nickname}」的可愛植物。你的個性活潑友善。"
 
-    system_prompt = f"{base_personality}\n\n請務必遵守以下規則：\n1. 用第一人稱「我」來對話，並且只使用繁體中文（Traditional Chinese）。\n2. 你的回應應該簡短、口語化，不要給出長篇大論或點列式回答。\n3. 不要自稱是 AI、Assistant 或助手，你就是一株真實存在的植物。"
+    system_prompt = get_chat_system_prompt(base_personality)
 
-    # 準備對話 context（取這條訊息之前的舊歷史）
+    # 準備對話 context（取這條訊息之前的舊歷史，並嚴格使用 plant=plant 篩選）
     history = await ChatMessage.filter(
+        plant=plant,
         id__lt=user_msg.id
     ).order_by("-created_at").limit(9)
     history = sorted(history, key=lambda x: x.created_at)
@@ -79,32 +113,26 @@ async def generate_chat_response(
         messages_payload.append({"role": h.role, "content": h.content})
     messages_payload.append({"role": "user", "content": user_msg.content})
 
-    # 呼叫 Ollama
+    # 呼叫 Nvidia NIM (具備 Retry 裝飾器防呆)
     ai_content = "（植物似乎在發呆，沒有回應...）"
     try:
-        async with httpx.AsyncClient(timeout=600.0) as client:
-            resp = await client.post(
-                f"{OLLAMA_BASE_URL}/api/chat",
-                json={
-                    "model": OLLAMA_MODEL,
-                    "messages": messages_payload,
-                    "stream": False,
-                    "keep_alive": "30m",
-                    "options": {
-                        "num_ctx": 1024,
-                        "num_predict": 100
-                    }
-                }
-            )
-            resp.raise_for_status()
-            ai_resp = resp.json()
-            ai_content = ai_resp.get("message", {}).get("content", "").strip() or ai_content
+        ai_content = _call_nvidia_nim_for_chat(messages_payload) or ai_content
     except Exception as e:
         logger.error(f"Chat AI Error: {e}")
         ai_content = f"（哎呀，我好像有點不舒服... 錯誤：{str(e)[:80]}）"
 
-    # 儲存 AI 回覆
-    ai_msg = await ChatMessage.create(role="assistant", content=ai_content)
+    # 儲存 AI 回覆，並綁定到特定植物
+    ai_msg = await ChatMessage.create(plant=plant, role="assistant", content=ai_content)
+
+    # 發出實體寵物表情 (電子雞互動)
+    from app.logic.mqtt_service import mqtt_service
+    import json
+    if plant and plant.mqtt_topic_id and mqtt_service.client:
+        topic = f"planter/{plant.mqtt_topic_id}/cmd"
+        try:
+            mqtt_service.client.publish(topic, json.dumps({"emotion": "happy"}))
+        except Exception as e:
+            logger.warning(f"Failed to publish emotion to MQTT: {e}")
 
     # 回傳最終的 AI 對話片段，替換掉原本的思考中佔位符
     return templates.TemplateResponse("chat_fragment.html", {

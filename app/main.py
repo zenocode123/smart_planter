@@ -3,10 +3,11 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
-from app.serial_reader import reader
 import asyncio
 import os
 from tortoise.contrib.fastapi import register_tortoise
+from app.scheduler import init_scheduler
+from app.logic.mqtt_service import mqtt_service
 from app.routers import auth, plants, chat
 from app.auth import NotAuthenticatedHTMX, require_user_htmx
 from app.models import Plant
@@ -16,13 +17,33 @@ import urllib.parse
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 啟動伺服器時：開啟背景讀取任務
-    task = asyncio.create_task(reader.run())
-    yield
-    # 關閉伺服器時：安全停止
-    reader.stop()
-    await task
+    # Initialize and start scheduler
 
+    # Initialize and start scheduler
+    # init_scheduler() # 先註冊但不啟動自動排程，方便手動測試
+    
+    # 啟動 MQTT 監聽服務
+    asyncio.create_task(mqtt_service.run())
+    
+    yield
+    
+    # 停止 MQTT 服務
+    mqtt_service.stop()
+    print("Cleanup complete.")
+
+# 系統底層最佳化：強制為本機 SQLite 開啟 WAL 與同步模式 (對抗 database is locked 問題)
+import sqlite3
+import os
+db_path = "app/database.db"
+# 若資料夾不存在則創建 (預防首次啟動)
+os.makedirs("app", exist_ok=True)
+try:
+    conn = sqlite3.connect(db_path)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.close()
+except Exception as e:
+    print(f"Warning: Failed to set SQLite PRAGMA - {e}")
 
 app = FastAPI(lifespan=lifespan)
 
@@ -31,9 +52,10 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 templates = Jinja2Templates(directory="app/templates")
 
-# 掛載 Routers
+# ── 路由註冊 ──
+
 app.include_router(auth.router)
-app.include_router(plants.router)
+app.include_router(plants.router) # /plants
 app.include_router(chat.router)
 
 # 註冊 Tortoise ORM

@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>🍃 Smart Planter</title>
 
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Pico CSS -->
     <link rel="stylesheet" href="/static/css/pico.green.min.css">
     <!-- Global Styles -->
@@ -15,6 +20,28 @@
     <script src="/static/js/htmx.min.js"></script>
     <script src="/static/js/alpine.min.js" defer></script>
     <script src="/static/js/app.js"></script>
+
+    <script>
+        // Theme toggle logic
+        function toggleTheme() {
+            const doc = document.documentElement;
+            const currentTheme = doc.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            doc.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            document.getElementById('theme-toggle').innerText = newTheme === 'light' ? '🌞' : '🌙';
+        }
+
+        // Apply saved theme on load
+        const savedTheme = localStorage.getItem('theme');
+        const systemPref = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const initialTheme = savedTheme || systemPref;
+        document.documentElement.setAttribute('data-theme', initialTheme);
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('theme-toggle');
+            if(btn) btn.innerText = initialTheme === 'light' ? '🌞' : '🌙';
+        });
+    </script>
 
     {% block extra_css %}{% endblock %}
 </head>
@@ -34,7 +61,8 @@
         <nav>
             <ul style="display: block;">
                 <li><a href="/" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">🏠 首頁</a></li>
-                <li><a href="/plants/settings" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">🌱 植物設定</a></li>
+                <li><a href="/plants/profile" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">🌱 植物設定</a></li>
+                <li><a href="/plants/reports" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">📊 歷史報表</a></li>
                 <li><a href="/chat" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">💬 與植物對話</a></li>
                 <li><a href="#" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">⚙️ 系統設定</a></li>
                 <li><hr style="margin: 1rem 0;"></li>
@@ -64,11 +92,12 @@
             </div>
 
             <!-- Right Side -->
-            <div class="nav-right">
+            <div class="nav-right" style="display: flex; align-items: center; gap: 1rem;">
+                <button id="theme-toggle" class="outline secondary" style="border: none; padding: 0.25rem 0.5rem; border-radius: 50%; font-size: 1.25rem; font-family: monospace; background: transparent;" onclick="toggleTheme()" title="切換主題">🌞</button>
                 {% if user %}
-                <span class="user-badge">Hi, <strong>{{ user.username }}</strong></span>
+                <span class="user-badge" style="padding: 0.35rem 0.85rem; border-radius: 20px; background: var(--pico-primary-background); color: var(--pico-primary-inverse); font-size: 0.85rem;">Hi, <strong>{{ user.username }}</strong></span>
                 {% else %}
-                <span class="user-badge" style="font-size: 0.75rem;">Guest</span>
+                <span class="user-badge" style="padding: 0.35rem 0.85rem; border-radius: 20px; background: var(--pico-secondary-background); color: var(--pico-secondary-inverse); font-size: 0.75rem;">Guest</span>
                 {% endif %}
             </div>
         </nav>

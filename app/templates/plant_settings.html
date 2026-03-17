@@ -18,7 +18,7 @@
                 {% endif %}
             </div>
             
-            <form hx-post="/plants/upload-photo"
+            <form hx-post="/plants/photo"
                   hx-target="#photo-preview"
                   hx-swap="innerHTML"
                   hx-encoding="multipart/form-data">
@@ -35,7 +35,7 @@
         <hr>
 
         <!-- 植物資料表單 -->
-        <form hx-post="/plants/settings" hx-target="#form-message"
+        <form hx-post="/plants/profile" hx-target="#form-message"
               hx-indicator="#save-loading" hx-disabled-elt="#save-btn">
             <label for="nickname">
                 植物暱稱 <small style="color: var(--pico-del-color);">*必填</small>

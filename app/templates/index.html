@@ -44,6 +44,13 @@
                 <div aria-busy="true" style="text-align: center; padding: 2rem;">載入中...</div>
             </div>
 
+             <div id="log-container" 
+                  hx-get="/plants/logs/latest" 
+                  hx-trigger="load, every 30s" 
+                  hx-swap="innerHTML">
+                 <div aria-busy="true" style="text-align: center; padding: 2rem;">🧠 正在讀取 AI 分析...</div>
+             </div>
+
             <!-- OOB 目標：連線狀態與更新時間 -->
             <div id="dashboard-controls"></div>
 
