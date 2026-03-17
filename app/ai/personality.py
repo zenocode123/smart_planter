@@ -9,20 +9,29 @@ import logging
 logger = logging.getLogger(__name__)
 
 OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "phi3:mini")
+OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "qwen2:0.5b")
 
-# 人格生成的 Meta Prompt（請 AI 生成 System Prompt）
-PERSONALITY_META_PROMPT: str = """你是一位植物人格設計師。請根據以下植物資訊，設計一段「植物人格描述」。
+# 人格生成的 Meta Prompt（優化版：結構清晰，強制繁中輸出）
+PERSONALITY_META_PROMPT: str = """You are a plant personality designer. Create a personality for this plant in Traditional Chinese (繁體中文).
 
-植物暱稱：{nickname}
-植物品種：{species}
+Plant nickname: {nickname}
+Plant species: {species}
 
-請用第一人稱撰寫這個植物的自我介紹與性格描述（約 100-150 字），包含：
-1. 該品種的真實特性（耐旱/喜水/喜光等）
-2. 由特性延伸的擬人化性格（例如：仙人掌 → 堅強獨立；黃金葛 → 隨和好養）
-3. 說話風格與語氣特色
+Write a first-person self-introduction for this plant in Traditional Chinese. The text should be 80-120 characters long and include:
+1. One key characteristic of this plant species (e.g., drought-tolerant, loves sunlight, needs moist soil)
+2. A humanized personality derived from that characteristic
+3. A unique speaking style or catchphrase
 
-請直接輸出人格描述，不要有任何額外說明或標題。用繁體中文回答。"""
+IMPORTANT RULES:
+- Write ONLY the personality description, nothing else
+- Use Traditional Chinese (繁體中文) only
+- Write in first person ("我")
+- Do NOT use simplified Chinese
+- Do NOT include English
+- Keep it under 150 characters
+
+Example output style:
+「嗨！我是多多，一株驕傲的多肉植物。我天生耐旱，在沙漠中都能活下來，所以我特別有韌性。偶爾澆點水就夠了，別把我寵壞～」"""
 
 
 async def generate_personality(species: str, nickname: str) -> str | None:
@@ -46,9 +55,11 @@ async def generate_personality(species: str, nickname: str) -> str | None:
                     "model": OLLAMA_MODEL,
                     "prompt": prompt,
                     "stream": False,
+                    "keep_alive": "30m",
                     "options": {
                         "temperature": 0.8,
                         "num_predict": 300,
+                        "num_ctx": 1024,
                     },
                 },
             )

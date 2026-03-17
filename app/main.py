@@ -7,7 +7,7 @@ from app.serial_reader import reader
 import asyncio
 import os
 from tortoise.contrib.fastapi import register_tortoise
-from app.routers import auth, plants
+from app.routers import auth, plants, chat
 from app.auth import NotAuthenticatedHTMX, require_user_htmx
 from app.models import Plant
 from fastapi import status, Depends
@@ -34,6 +34,7 @@ templates = Jinja2Templates(directory="app/templates")
 # 掛載 Routers
 app.include_router(auth.router)
 app.include_router(plants.router)
+app.include_router(chat.router)
 
 # 註冊 Tortoise ORM
 register_tortoise(
