@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, Request, Depends, Form, UploadFile, File, BackgroundTasks
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from app.serial_reader import reader
+from app.mqtt_client import mqtt_client as reader
 from app.models import Plant
 from app.auth import require_user_htmx
 from datetime import datetime, date

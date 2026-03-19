@@ -3,7 +3,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
-from app.serial_reader import reader
+from app.mqtt_client import mqtt_client as reader
 import asyncio
 import os
 from tortoise.contrib.fastapi import register_tortoise
@@ -16,10 +16,11 @@ import urllib.parse
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 啟動伺服器時：開啟背景讀取任務
+    # 啟動伺服器時：開啟 MQTT 背景讀取任務
+    # 意圖：與 Serial 通訊一致，背景任務負責持續更新資料快取
     task = asyncio.create_task(reader.run())
     yield
-    # 關閉伺服器時：安全停止
+    # 關閉伺服器時：安全關閉連線
     reader.stop()
     await task
 

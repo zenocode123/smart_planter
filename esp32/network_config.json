@@ -1,4 +1,5 @@
 {
     "WIFI_SSID": "youliaoshouji",
     "WIFI_PASS": "78912345",
+    "MQTT_BROKER": "192.168.X.X"
 }
