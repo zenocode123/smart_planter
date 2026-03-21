@@ -9,9 +9,9 @@ from app.models import User
 load_dotenv()
 
 # JWT 設定參數
-SECRET_KEY = os.getenv("SECRET_KEY", "yoursecretkey-please-change-it-in-production")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_SECONDS = int(os.getenv("ACCESS_TOKEN_EXPIRE_SECONDS", 60 * 60 * 24 * 7))  # 預設 7 天的秒數
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_SECONDS = int(os.getenv("ACCESS_TOKEN_EXPIRE_SECONDS", 604800))
 
 
 def verify_password(plain_password, hashed_password):
@@ -59,8 +59,8 @@ async def get_current_user(request: Request):
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        email: str = payload.get("sub")
+        if email is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
             )
@@ -69,8 +69,8 @@ async def get_current_user(request: Request):
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
         )
 
-    # 查資料庫
-    user = await User.get_or_none(username=username)
+    # 用 Email 查資料庫
+    user = await User.get_or_none(email=email)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found"

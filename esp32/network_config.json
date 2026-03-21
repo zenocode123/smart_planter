@@ -1,4 +1,8 @@
 {
     "WIFI_SSID": "youliaoshouji",
     "WIFI_PASS": "78912345",
+    "MQTT_BROKER": "raspberrypi.local",
+    "CLIENT_ID": "planter_01",
+    "TOPIC_SENSOR": "planter/planter_01/sensor",
+    "TOPIC_CMD": "planter/planter_01/cmd"
 }

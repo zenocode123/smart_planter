@@ -2,84 +2,64 @@
 AI 人格生成模組 - 透過 Ollama API 為植物生成個性化人格
 根據植物品種自動產生 System Prompt，用於後續 AI 對話 (UC08)
 """
-import httpx
+from openai import OpenAI
 import os
 import logging
 
 logger = logging.getLogger(__name__)
 
-OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "qwen2:0.5b")
+# Nvidia NIM 設定項目 (OpenAI 兼容)
+NVIDIA_NIM_API_KEY: str = os.getenv("NVIDIA_NIM_API_KEY")
+NVIDIA_MODEL_NAME: str = os.getenv("NVIDIA_MODEL_NAME")
+NVIDIA_NIM_BASE_URL: str = os.getenv("NVIDIA_NIM_BASE_URL")
 
-# 人格生成的 Meta Prompt（優化版：結構清晰，強制繁中輸出）
-PERSONALITY_META_PROMPT: str = """You are a plant personality designer. Create a personality for this plant in Traditional Chinese (繁體中文).
+# 延遲初始化客戶端，避免啟動時因缺失 API Key 崩潰
+def get_ai_client():
+    if not NVIDIA_NIM_API_KEY or not NVIDIA_NIM_BASE_URL:
+        return None
+    return OpenAI(
+      base_url=NVIDIA_NIM_BASE_URL,
+      api_key=NVIDIA_NIM_API_KEY
+    )
 
-Plant nickname: {nickname}
-Plant species: {species}
+from app.ai.prompts import PERSONALITY_PROMPT, with_retry_sync
 
-Write a first-person self-introduction for this plant in Traditional Chinese. The text should be 80-120 characters long and include:
-1. One key characteristic of this plant species (e.g., drought-tolerant, loves sunlight, needs moist soil)
-2. A humanized personality derived from that characteristic
-3. A unique speaking style or catchphrase
-
-IMPORTANT RULES:
-- Write ONLY the personality description, nothing else
-- Use Traditional Chinese (繁體中文) only
-- Write in first person ("我")
-- Do NOT use simplified Chinese
-- Do NOT include English
-- Keep it under 150 characters
-
-Example output style:
-「嗨！我是多多，一株驕傲的多肉植物。我天生耐旱，在沙漠中都能活下來，所以我特別有韌性。偶爾澆點水就夠了，別把我寵壞～」"""
-
+@with_retry_sync(max_retries=3)
+def _call_nvidia_nim_for_personality(prompt: str) -> str:
+    """內部函式：受 Retry 保護的 API 呼叫"""
+    client = get_ai_client()
+    if not client:
+        raise ValueError("NVIDIA_NIM_API_KEY 未設定")
+        
+    response = client.chat.completions.create(
+        model=NVIDIA_MODEL_NAME,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.8,
+        max_tokens=300,
+        top_p=0.7
+    )
+    return response.choices[0].message.content.strip()
 
 async def generate_personality(species: str, nickname: str) -> str | None:
     """
-    呼叫 Ollama API 生成植物人格 System Prompt。
-
-    Args:
-        species: 植物品種
-        nickname: 植物暱稱
-
-    Returns:
-        生成的人格描述文字，或 None（若生成失敗）
+    呼叫 Nvidia NIM API 生成植物人格 System Prompt。
     """
-    prompt: str = PERSONALITY_META_PROMPT.format(nickname=nickname, species=species)
+    if not NVIDIA_NIM_API_KEY:
+        logger.warning("⚠️ NVIDIA_NIM_API_KEY 未設定，無法生成人格。")
+        return None
+
+    prompt: str = PERSONALITY_PROMPT.format(nickname=nickname, species=species)
 
     try:
-        async with httpx.AsyncClient(timeout=600.0) as client:
-            resp = await client.post(
-                f"{OLLAMA_BASE_URL}/api/generate",
-                json={
-                    "model": OLLAMA_MODEL,
-                    "prompt": prompt,
-                    "stream": False,
-                    "keep_alive": "30m",
-                    "options": {
-                        "temperature": 0.8,
-                        "num_predict": 300,
-                        "num_ctx": 1024,
-                    },
-                },
-            )
-            resp.raise_for_status()
-            result: dict = resp.json()
-            personality: str = result.get("response", "").strip()
+        personality = _call_nvidia_nim_for_personality(prompt)
 
-            if personality:
-                logger.info(f"✅ AI 人格已生成：{nickname}（{species}）")
-                return personality
-            else:
-                logger.warning(f"⚠️ AI 回傳空白人格：{nickname}（{species}）")
-                return None
+        if personality:
+            logger.info(f"✅ AI 人格已透過 Nvidia NIM 生成：{nickname}（{species}）")
+            return personality
+        else:
+            logger.warning(f"⚠️ AI 回傳空白人格：{nickname}（{species}）")
+            return None
 
-    except httpx.TimeoutException:
-        logger.error(f"❌ Ollama 請求超時（600s）：{nickname}（{species}）")
-        return None
-    except httpx.HTTPStatusError as e:
-        logger.error(f"❌ Ollama HTTP 錯誤 {e.response.status_code}：{e}")
-        return None
     except Exception as e:
-        logger.error(f"❌ AI 人格生成失敗：{e}")
+        logger.error(f"❌ Nvidia NIM 人格生成失敗：{e}")
         return None

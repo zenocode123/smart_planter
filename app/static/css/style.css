@@ -1,354 +1,255 @@
-/* Custom Global Styles for Smart Planter */
+/* Custom Global Styles for Smart Planter - Glassmorphism Edition */
+
 :root {
-    --primary-color: #10b981;
+    --pico-font-family-sans-serif: 'Outfit', system-ui, sans-serif;
+    --primary-color: #059669; /* Emerald Green */
+    --pico-primary: #059669;
+    --pico-primary-hover: #047857;
+    --pico-primary-focus: rgba(5, 150, 105, 0.25);
+    --pico-border-radius: 16px;
+    --pico-form-element-spacing-vertical: 1rem;
+    --pico-form-element-spacing-horizontal: 1.25rem;
+}
+
+/* 雙佈景主題動態漸層背景 + 毛玻璃參數 */
+[data-theme="light"] {
+    --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #ecfdf5 100%);
+    --pico-background-color: transparent;
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    --bubble-user: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+[data-theme="dark"] {
+    --bg-gradient: linear-gradient(135deg, #0f172a 0%, #064e3b 100%);
+    --pico-background-color: transparent;
+    --glass-bg: rgba(15, 23, 42, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    --pico-card-background-color: transparent;
+    --bubble-user: linear-gradient(135deg, #059669 0%, #047857 100%);
 }
 
 body {
-    transition: background-color 0.3s ease;
+    background-image: var(--bg-gradient);
+    background-attachment: fixed;
+    transition: background 0.4s ease;
+    min-height: 100vh;
 }
 
-/* Sidebar & Overlay */
-#overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 9998;
-    backdrop-filter: blur(2px);
-    cursor: pointer;
+/* =========================================
+   Glassmorphism 共用類別
+========================================= */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
 }
 
-#sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 260px;
-    background-color: var(--pico-background-color);
-    z-index: 9999;
-    padding: 1.5rem;
-    transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-right: 1px solid var(--pico-muted-border-color);
-    pointer-events: auto;
-    overflow-y: auto;
+/* =========================================
+   Mobile-First 按鈕微動畫與手指優化
+========================================= */
+button, input, select, textarea {
+    min-height: 48px; /* 遵守 @mobile-design: Touch target minimum */
 }
 
-#sidebar.open {
-    transform: translateX(0);
+/* 特效行為按鈕 (如 澆水, 發送對話) */
+button.contrast, .chat-send-btn, #save-btn {
+    border-radius: 20px !important;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    box-shadow: 0 6px 20px rgba(5, 150, 105, 0.3) !important;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    height: 3.5rem;
 }
 
-/* Dashboard Layout */
-.dashboard-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    align-items: center;
+button.contrast:hover, .chat-send-btn:hover, #save-btn:hover {
+    transform: scale(1.03) translateY(-3px);
+    box-shadow: 0 10px 25px rgba(5, 150, 105, 0.4) !important;
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
 }
 
-@media (min-width: 768px) {
-    .dashboard-layout {
-        flex-direction: row;
-        justify-content: center;
-        align-items: stretch;
-        gap: 2rem;
-    }
+button.contrast:active, .chat-send-btn:active, #save-btn:active {
+    transform: scale(0.96) translateY(0);
+    box-shadow: 0 4px 10px rgba(5, 150, 105, 0.2) !important;
 }
 
-/* Plant Card */
-.plant-card {
-    width: 100%;
-    max-width: 450px;
-    border-radius: 16px;
-    overflow: hidden;
-    background: var(--pico-card-background-color);
-    box-shadow: var(--pico-card-box-shadow);
-}
-
-.plant-card img {
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: cover;
-}
-
-/* Sensor Cards */
-.sensor-cards-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    width: 100%;
-    max-width: 450px;
-}
-
-.sensor-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.25rem;
-    border-radius: 12px;
-    background: var(--pico-card-background-color);
-    border: 1px solid var(--pico-muted-border-color);
-}
-
-.sensor-value {
-    font-size: 1.25rem;
-    font-weight: 700;
-}
-
-/* Settings Page */
-.settings-card {
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.photo-upload-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.photo-preview-box {
-    width: 200px;
-    height: 200px;
-    border-radius: 16px;
-    overflow: hidden;
-    background-color: var(--pico-card-background-color);
-    border: 2px dashed var(--pico-muted-border-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.3s;
-}
-
-.photo-preview-box img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* Animations */
-.rotating {
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-.fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* HTMX Indicator Styling - 防止隱藏時佔用空間 */
-.htmx-indicator {
-    display: none;
-}
-.htmx-request .htmx-indicator {
-    display: block;
-}
-.htmx-request.htmx-indicator {
-    display: block;
-}
-
-/* Settings Actions - 統一按鈕高度與對齊 */
-.settings-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1.5rem;
-    align-items: stretch; /* 確保高度一致 */
-}
-
-.settings-actions > * {
-    flex: 1;
-    margin: 0 !important; /* 移除 Pico 預設外邊距 */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 3rem; /* 固定高度確保對齊 */
-}
-
-/* Smart Navbar Grid - Perfect Balance */
+/* =========================================
+   懸浮式導覽列 (Floating Nav Grid)
+========================================= */
 .nav-grid {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     width: 100%;
-    margin-bottom: 2rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--pico-muted-border-color);
+    margin: 1rem auto 2.5rem auto;
+    padding: 0.75rem 1.5rem;
+    border-radius: 24px;
+    position: sticky;
+    top: 1rem;
+    z-index: 100;
+    
+    background: var(--glass-bg);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: var(--glass-shadow);
+    border: 1px solid var(--glass-border);
 }
 
-.nav-left {
-    display: flex;
-    justify-content: flex-start;
-}
-
-.nav-center {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem;
-    white-space: nowrap;
-}
-
-.nav-right {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-}
+.nav-left { display: flex; justify-content: flex-start; }
+.nav-center { display: flex; align-items: center; justify-content: center; gap: 0.6rem; white-space: nowrap; font-weight: bold; }
+.nav-right { display: flex; justify-content: flex-end; align-items: center; }
 
 .nav-btn-icon {
-    background: rgba(0, 0, 0, 0.03) !important; /* 極淡背景定義形狀 */
+    background: rgba(0, 0, 0, 0.04) !important;
     border: none !important;
     padding: 0.5rem !important;
-    border-radius: 10px !important;
-    color: var(--pico-primary) !important; /* 使用品牌色提升可見度 */
+    border-radius: 12px !important;
+    color: var(--pico-primary) !important;
     transition: all 0.2s ease !important;
     margin: 0 !important;
-    width: auto !important;
-    box-shadow: none !important;
+    width: 48px !important;
+    height: 48px !important;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-[data-theme="dark"] .nav-btn-icon {
-    background: rgba(255, 255, 255, 0.05) !important;
+[data-theme="dark"] .nav-btn-icon { background: rgba(255, 255, 255, 0.06) !important; }
+.nav-btn-icon:hover { background: rgba(0, 0, 0, 0.08) !important; transform: scale(1.08); }
+[data-theme="dark"] .nav-btn-icon:hover { background: rgba(255, 255, 255, 0.12) !important; }
+
+/* =========================================
+   Sidebar & Overlay
+========================================= */
+#overlay {
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.5); z-index: 9998;
+    backdrop-filter: blur(4px); cursor: pointer;
 }
 
-.nav-btn-icon:hover {
-    background: rgba(0, 0, 0, 0.08) !important;
-    transform: scale(1.05); /* Hover 時輕微放大增強反饋 */
+#sidebar {
+    position: fixed; left: 0; top: 0;
+    height: 100%; width: 280px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+    z-index: 9999; padding: 1.5rem;
+    transform: translateX(-100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border-right: 1px solid var(--glass-border);
+    pointer-events: auto; overflow-y: auto;
+}
+#sidebar.open { transform: translateX(0); box-shadow: 0 0 50px rgba(0,0,0,0.15); }
+
+/* =========================================
+   Dashboard (Plant Card & Sensors)
+========================================= */
+.dashboard-layout { display: flex; flex-direction: column; gap: 1.5rem; align-items: center; }
+@media (min-width: 768px) { .dashboard-layout { flex-direction: row; justify-content: center; align-items: stretch; gap: 2rem; } }
+
+.plant-card {
+    width: 100%; max-width: 450px;
+    border-radius: 28px;
+    padding: 1.5rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-[data-theme="dark"] .nav-btn-icon:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
-}
+.plant-card:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(5, 150, 105, 0.15); }
+.plant-card img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 20px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1); }
 
-.user-badge {
-    color: var(--pico-muted-color);
-    font-size: 0.85rem;
-    opacity: 0.9;
-}
+.sensor-cards-container { display: flex; flex-direction: column; gap: 1rem; width: 100%; max-width: 450px; }
 
-/* --- Chat UI --- */
-.chat-container {
-    max-width: 760px;
-    margin: 0 auto;
+.sensor-card {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.25rem 1.5rem; border-radius: 20px;
+    background: var(--glass-bg); backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+    transition: transform 0.2s;
 }
+.sensor-card:hover { transform: scale(1.015); border-color: var(--pico-primary); }
+.sensor-value { font-size: 1.5rem; font-weight: 700; color: var(--pico-primary); }
 
+/* =========================================
+   Settings, Photos & Reports
+========================================= */
+.settings-card { max-width: 600px; margin: 0 auto; padding: 2rem; border-radius: 30px; }
+
+.photo-preview-box {
+    width: 220px; height: 220px;
+    border-radius: 30px; overflow: hidden;
+    background-color: var(--glass-bg);
+    border: 2px dashed rgba(16, 185, 129, 0.5); /* 提示虛線 */
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+}
+.photo-preview-box:hover { border-color: var(--pico-primary); transform: scale(1.02); }
+.photo-preview-box img { width: 100%; height: 100%; object-fit: cover; }
+
+/* =========================================
+   Chat UI 
+========================================= */
+.chat-container { max-width: 760px; margin: 0 auto; }
 .chat-window {
-    display: flex;
-    flex-direction: column;
-    height: 65vh;
-    min-height: 400px;
-    padding: 0;
-    overflow: hidden;
-    background: var(--pico-card-background-color);
+    display: flex; flex-direction: column;
+    height: 68vh; min-height: 450px;
+    border-radius: 28px; overflow: hidden;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
 }
 
 .chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    flex: 1; overflow-y: auto; padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 1rem;
 }
 
-.message-bubble {
-    max-width: 78%;
-    display: flex;
-}
-
-.message-bubble.user {
-    align-self: flex-end;
-}
-
-.message-bubble.assistant {
-    align-self: flex-start;
-}
+.message-bubble { max-width: 82%; display: flex; animation: slideUp 0.3s ease forwards; }
+.message-bubble.user { align-self: flex-end; }
+.message-bubble.assistant { align-self: flex-start; }
 
 .bubble-content {
-    padding: 0.65rem 1rem;
-    border-radius: 18px;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    word-break: break-word;
+    padding: 0.85rem 1.25rem;
+    border-radius: 22px; font-size: 1rem; line-height: 1.5; word-break: break-word;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
 .user .bubble-content {
-    background-color: var(--pico-primary);
-    color: white;
-    border-bottom-right-radius: 4px;
+    background: var(--bubble-user);
+    color: white; border-bottom-right-radius: 6px;
 }
 
 .assistant .bubble-content {
-    background-color: var(--pico-muted-background-color);
-    color: var(--pico-color);
-    border-bottom-left-radius: 4px;
+    background: var(--pico-muted-background-color);
+    color: var(--pico-color); border-bottom-left-radius: 6px;
 }
 
-/* 思考動畫 */
-.thinking span {
-    animation: thinkingDot 1.4s infinite;
-    font-weight: bold;
-    font-size: 1.4rem;
-}
-.thinking span:nth-child(2) { animation-delay: 0.2s; }
-.thinking span:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes thinkingDot {
-    0%, 80%, 100% { opacity: 0; }
-    40% { opacity: 1; }
-}
-
-/* HTMX 載入動畫 */
-.chat-loading-area {
-    opacity: 0;
-    padding: 0 1rem 0.5rem;
-    pointer-events: none;
-    transition: opacity 200ms ease-in;
-}
-
-#chat-loading.htmx-request {
-    opacity: 1;
-}
-
-/* 輸入列 */
 .chat-input-area {
-    padding: 1rem;
-    border-top: 1px solid var(--pico-muted-border-color);
-    background: var(--pico-background-color);
-    flex-shrink: 0;
+    padding: 1.25rem; border-top: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.1);
 }
+.chat-input-row { display: flex; gap: 0.75rem; align-items: center; width: 100%; }
+.chat-input-row input.chat-input { flex: 1 1 auto; margin-bottom: 0 !important; height: 3.5rem; border-radius: 20px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); }
 
-.chat-input-row {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 0.75rem;
-    align-items: center;
-    width: 100%;
-}
+/* =========================================
+   Animations & Utilites
+========================================= */
+.rotating { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-.chat-input-row input.chat-input {
-    flex: 1 1 auto;
-    margin-bottom: 0 !important;
-    height: 3.2rem;
-}
+.fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-.chat-input-row button.chat-send-btn {
-    flex: 0 0 auto;
-    width: 120px;
-    height: 3.2rem;
-    padding: 0;
-    margin-bottom: 0 !important;
-    font-weight: bold;
-}
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+.htmx-indicator { display: none; }
+.htmx-request .htmx-indicator { display: block; }
+.htmx-request.htmx-indicator { display: block; }
