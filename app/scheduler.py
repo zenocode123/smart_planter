@@ -14,6 +14,7 @@ from app.logic.security import secret_manager
 from openai import OpenAI
 import os
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
