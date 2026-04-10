@@ -1,0 +1,101 @@
+<!-- AI 澆水確認彈窗 - 由 POST /plants/water 回傳後注入到 #water-modal-container -->
+<dialog id="ai-watering-dialog" open class="ai-dialog-card">
+    <!-- 頂部色條已移除以配合全版設計 -->
+
+    <div class="ai-dialog-body">
+        <!-- 標題行 -->
+        <div class="flex-row ai-dialog-header">
+            <span class="ai-dialog-icon">
+                {% if advice.recommend %}🤖{% else %}🤔{% endif %}
+            </span>
+            <div>
+                <h3 class="ai-dialog-title mb-0">AI 澆水建議</h3>
+                <p class="ai-dialog-subtitle mb-0">植物品種：{{ advice.species }}</p>
+            </div>
+            <!-- 建議徽章 -->
+            <span class="badge {% if advice.recommend %}badge-success{% else %}badge-warning{% endif %} ml-auto">
+                {% if advice.recommend %}✅ 建議澆水{% else %}⚠️ 不建議{% endif %}
+            </span>
+        </div>
+
+        <!-- AI 說明 -->
+        <div class="ai-chat-bubble {% if not advice.recommend %}ai-chat-bubble-warning{% endif %}">
+            {{ advice.reason }}
+        </div>
+
+        <!-- 感測數據摘要 -->
+        <div class="sensor-grid">
+            <div class="sensor-grid-item">
+                🌡️ 溫度：<strong>
+                    {% if advice.temp is not none %}{{ "%.1f"|format(advice.temp) }}°C{% else %}--{% endif %}
+                </strong>
+            </div>
+            <div class="sensor-grid-item">
+                💧 濕度：<strong>
+                    {% if advice.humidity is not none %}{{ "%.0f"|format(advice.humidity) }}%{% else %}--{% endif %}
+                </strong>
+            </div>
+            <div class="sensor-grid-item">
+                🌱 土壤：<strong>
+                    {% if advice.moisture is not none %}{{ "%.0f"|format(advice.moisture) }}%{% else %}--{% endif %}
+                </strong>
+            </div>
+            <div class="sensor-grid-item">
+                ☀️ 光照：<strong>
+                    {% if advice.lux is not none %}{{ "%.0f"|format(advice.lux) }} lux{% else %}--{% endif %}
+                </strong>
+            </div>
+        </div>
+
+        <!-- 操作按鈕 -->
+        <div class="ai-dialog-actions">
+            <!-- 取消 -->
+            <button
+                class="outline secondary ai-dialog-btn-cancel mb-0"
+                onclick="document.getElementById('ai-watering-dialog').remove(); const o=document.querySelector('[data-ai-overlay]'); if(o) o.remove();"
+            >
+                ❌ 取消
+            </button>
+
+            <!-- 確定灌溉
+                 關鍵：
+                 1. hx-on::before-request：按鈕進入「傳送中」狀態
+                 2. hx-on::after-request：
+                    - 先移除 dialog（此時 HTMX 已完成請求）
+                    - 確認成功 (204) 才 dispatch start-watering-client
+                    - 失敗 (409/503) 時 alert 並還原按鈕
+            -->
+            <button id="ai-confirm-btn"
+                class="{% if advice.recommend %}btn-gradient-success{% else %}btn-gradient-warning{% endif %} ai-dialog-btn-confirm mb-0"
+                hx-post="/plants/water/confirm"
+                hx-target="#water-modal-container"
+                hx-swap="innerHTML"
+                hx-on::before-request="this.innerHTML='⏳ 傳送中...'; this.style.opacity='0.7'; this.style.pointerEvents='none';"
+                hx-on::after-request="
+                    const d = document.getElementById('ai-watering-dialog'); if(d) d.remove();
+                    const o = document.querySelector('[data-ai-overlay]'); if(o) o.remove();
+                    if(event.detail.successful) {
+                        const cmdTime = event.detail.xhr.getResponseHeader('X-Command-Time');
+                        window.dispatchEvent(new CustomEvent('start-watering-client', {detail: {cmdTime: parseFloat(cmdTime)}}));
+                    }"
+            >
+                💦 確定灌溉
+            </button>
+        </div>
+
+        <p class="ai-dialog-footer-text mb-0 text-center">
+            最終決定由您做主，AI 僅供參考
+        </p>
+    </div>
+</dialog>
+
+<!-- 遮罩層 -->
+<div
+    data-ai-overlay class="modal-backdrop"
+    onclick="document.getElementById('ai-watering-dialog').remove(); this.remove();"
+></div>
+
+<script>
+    // 確保動態注入的 hx-* 屬性（包含 hx-on::）被 HTMX 正確識別
+    htmx.process(document.getElementById('ai-watering-dialog'));
+</script>

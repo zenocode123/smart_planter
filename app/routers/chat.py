@@ -77,7 +77,8 @@ async def post_chat_message(
     return templates.TemplateResponse("chat_fragment.html", {
         "request": request,
         "user_msg": user_msg,
-        "is_placeholder": True
+        "is_placeholder": True,
+        "plant": plant
     })
 
 @router.post("/generate/{user_msg_id}", response_class=HTMLResponse)
@@ -99,7 +100,33 @@ async def generate_chat_response(
         nickname = plant.nickname if plant and plant.nickname else "小植"
         base_personality = f"你是一株名為「{nickname}」的可愛植物。你的個性活潑友善。"
 
-    system_prompt = get_chat_system_prompt(base_personality)
+    # 獲取最近一筆感測器資料
+    from app.models import PlantLog
+    from datetime import datetime, timezone, timedelta
+    
+    sensor_data = None
+    if plant:
+        latest_log = await PlantLog.filter(plant=plant).order_by("-created_at").first()
+        if latest_log and latest_log.soil_moisture is not None:
+            # 只要資料超過 10 分鐘沒有更新，就視為感測器斷線，不傳入 sensor_data
+            now = datetime.now(timezone.utc)
+            log_time = latest_log.created_at
+            if log_time.tzinfo is None:
+                now = now.replace(tzinfo=None)
+                
+            if now - log_time < timedelta(minutes=10):
+                sensor_data = {
+                    "temp": latest_log.temperature,
+                    "hum": latest_log.humidity,
+                    "moisture": latest_log.soil_moisture,
+                    "lux": latest_log.lux
+                }
+
+    system_prompt = get_chat_system_prompt(
+        base_personality, 
+        species=plant.species if plant and plant.species else "植物",
+        sensor_data=sensor_data
+    )
 
     # 準備對話 context（取這條訊息之前的舊歷史，並嚴格使用 plant=plant 篩選）
     history = await ChatMessage.filter(
@@ -138,5 +165,6 @@ async def generate_chat_response(
     return templates.TemplateResponse("chat_fragment.html", {
         "request": request,
         "ai_msg": ai_msg,
-        "is_placeholder": False
+        "is_placeholder": False,
+        "plant": plant
     })

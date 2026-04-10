@@ -1,38 +1,49 @@
 {% if log %}
-<div class="log-card" style="margin-top: 1.5rem;">
-    <!-- AI 分析小語區塊 -->
-    <article style="background: var(--pico-card-sectioning-background-color); border: 1px solid var(--pico-muted-border-color); margin-bottom: 2rem;">
-        <header style="margin-bottom: 0.5rem; color: var(--pico-primary); font-weight: bold;">
-            🪴 來自 AI 的最新分析 <span style="font-size: 0.8em; color: var(--pico-muted-color); font-weight: normal;">({{ log.created_at.strftime('%m-%d %H:%M') if log.created_at else '' }})</span>
+    <!-- AI 分析 (直接替換至 #log-container) -->
+    <div class="sensor-card log-ai-card">
+        <header class="text-primary text-bold log-ai-header">
+            <div>🪴 來自 AI 的最新分析</div>
+            <span class="text-sm text-muted text-normal">({{
+                log.created_at.strftime('%m-%d %H:%M') if log.created_at else '' }})</span>
         </header>
-        <p style="margin-bottom: 0;">{{ log.ai_analysis if log.ai_analysis else "AI 正在沉思中，請稍後..." }}</p>
-    </article>
+        <p class="mb-0 log-ai-text">{{ log.ai_analysis if log.ai_analysis else "AI 正在沉思中，請稍後..." }}</p>
+    </div>
 
-    <!-- 歷史趨勢圖與照片並排顯示 (桌機並排，手機單欄) -->
-    <div class="grid">
-        <!-- 歷史趨勢折線圖 -->
-        <div>
-            <h4 style="margin-bottom: 0.5rem;">📊 環境趨勢圖</h4>
-            <div style="border-radius: 8px; overflow: hidden; border: 1px solid var(--pico-muted-border-color); background: white;">
-                <img src="/static/plots/history_chart.png" alt="History Chart" style="width: 100%; height: auto; display: block;" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNlMGUwZTAiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGFsaWdubWVudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjNzc3Ij7lnJblgJnrkoDliIbkub0uLjwvdGV4dD48L3N2Zz4='">
+    <!-- 歷史圖表與相片 (OOB 到 #chart-photo-target) -->
+    <div id="chart-photo-target" hx-swap-oob="true">
+        <div class="dashboard-layout mt-2 align-stretch">
+            <!-- 左側：歷史趨勢折線圖（優先從 DB BLOB 讀取，後備即時繪製） -->
+            <div class="log-col">
+                <h4 class="text-center mb-1">📊 環境趨勢圖</h4>
+                <div class="image-box log-image-wrapper align-center">
+                    <img src="/plants/reports/log/{{ log.id }}/chart.png"
+                        alt="History Chart" class="log-image-fit-contain"
+                        onerror="this.onerror=null; this.src='/plants/plots/{{ log.plant_id }}/chart.png?end_timestamp={{ log.created_at.timestamp() }}'">
+                </div>
             </div>
-        </div>
-        
-        <!-- 自動排程拍攝的最新實體相片 -->
-        <div>
-            <h4 style="margin-bottom: 0.5rem;">📷 最新相片</h4>
-            <div style="border-radius: 8px; overflow: hidden; border: 1px solid var(--pico-muted-border-color); aspect-ratio: 16/9; background: #000;">
-                {% if log.photo_path %}
-                <img src="{{ log.photo_path }}" alt="Latest Plant Photo" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-                {% else %}
-                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #777;">暫無照片</div>
-                {% endif %}
+
+            <!-- 右側：最新實體相片（優先從 DB BLOB 讀取，後備靜態檔案路徑） -->
+            <div class="log-col">
+                <h4 class="text-center mb-1">📷 最新相片</h4>
+                <div class="image-box-dark log-image-wrapper align-stretch">
+                    {% if log.photo_blob or log.photo_path %}
+                    <img src="/plants/reports/log/{{ log.id }}/photo.jpg"
+                        alt="Plant Photo" class="log-image-fit-cover"
+                        onerror="this.onerror=null; {% if log.photo_path %}this.src='{{ log.photo_path }}';{% else %}this.closest('.image-box-dark').innerHTML='<div class=\'empty-photo\'>暫無照片</div>';{% endif %}">
+                    {% else %}
+                    <div class="empty-photo">暫無照片</div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
-</div>
 {% else %}
-<div style="text-align: center; color: var(--pico-muted-color); padding: 2rem; border: 1px dashed var(--pico-muted-border-color); border-radius: 8px; margin-top: 1.5rem;">
-    ⏰ 等待第一次排程執行，目前尚未有歷史紀錄。
-</div>
+    <div class="log-empty-state">
+        ⏰ 等待第一次排程執行，目前尚未有歷史紀錄。
+    </div>
+    <div id="chart-photo-target" hx-swap-oob="true">
+        <div class="text-center text-muted mt-2">
+            ⏳ 尚未累積圖表與相片。
+        </div>
+    </div>
 {% endif %}

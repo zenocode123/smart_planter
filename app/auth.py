@@ -10,8 +10,13 @@ load_dotenv()
 
 # JWT 設定參數
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_SECONDS = int(os.getenv("ACCESS_TOKEN_EXPIRE_SECONDS", 604800))
+
+if not SECRET_KEY:
+    raise RuntimeError(
+        "❌ 環境變數 SECRET_KEY 未設定，無法啟動服務！請檢查 .env 檔案。"
+    )
 
 
 def verify_password(plain_password, hashed_password):
@@ -78,8 +83,10 @@ async def get_current_user(request: Request):
 
     return user
 
+
 class NotAuthenticatedHTMX(Exception):
     pass
+
 
 async def require_user_htmx(request: Request):
     try:

@@ -2,14 +2,20 @@ from machine import Pin
 import time
 
 class WaterRelay:
-    def __init__(self, pin_num, inverted=True):
+    def __init__(self, pin_num, inverted=True, open_drain=False):
         """
         初始化繼電器
         :param pin_num: ESP32 的 GPIO 引腳編號
         :param inverted: 是否為低電平觸發 (Low Level Trigger)。
                          如果是，設為 True；一般高電平觸發設為 False。
+        :param open_drain: 是否使用開漏輸出模式 (Open Drain)。
+                           解決 3.3V 開發板無法關閉 5V 繼電器的問題。
         """
-        self.pin = Pin(pin_num, Pin.OUT)
+        if open_drain:
+            self.pin = Pin(pin_num, Pin.OPEN_DRAIN)
+        else:
+            self.pin = Pin(pin_num, Pin.OUT)
+            
         self.inverted = inverted
         self.off() # 確保啟動時水泵是關閉的
 

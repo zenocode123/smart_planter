@@ -70,6 +70,8 @@ class PlantLog(models.Model):
     lux = fields.FloatField(null=True, description="光照度")
     
     photo_path = fields.CharField(max_length=255, null=True, description="相片儲存路徑")
+    photo_blob = fields.BinaryField(null=True, description="照片 JPEG 原始 bytes（存入 DB）")
+    chart_blob = fields.BinaryField(null=True, description="趨勢圖 PNG 原始 bytes（存入 DB）")
     ai_analysis = fields.TextField(null=True, description="AI 分析結果")
     watering_suggested = fields.BooleanField(default=False, description="是否建議澆水")
     
@@ -80,3 +82,19 @@ class PlantLog(models.Model):
 
     def __str__(self) -> str:
         return f"Log(Plant:{self.plant_id}, {self.created_at})"
+
+class WateringLog(models.Model):
+    """手動/系統實際澆水紀錄模型"""
+    id = fields.IntField(pk=True)
+    plant = fields.ForeignKeyField("models.Plant", related_name="waterings", null=True)
+    
+    source = fields.CharField(max_length=20, description="來源 (manual/system)")
+    duration = fields.FloatField(description="澆水秒數")
+    
+    created_at = fields.DatetimeField(auto_now_add=True, index=True, description="澆水時間")
+
+    class Meta:
+        table = "watering_logs"
+
+    def __str__(self) -> str:
+        return f"Watering(Plant:{self.plant_id}, {self.source}, {self.duration}s)"

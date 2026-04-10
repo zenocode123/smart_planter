@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-<article style="max-width: 400px; margin: 2rem auto;">
-    <h2 style="text-align: center;">註冊帳號</h2>
+<article class="login-card">
+    <h2 class="text-center">註冊帳號</h2>
 
     <form hx-post="/auth/register" hx-target="#auth-message" hx-swap="innerHTML">
         <label for="username">
@@ -26,11 +26,11 @@
             <input type="password" id="password" name="password" required placeholder="輸入新密碼">
         </label>
 
-        <div id="auth-message" style="margin-top: 1rem; margin-bottom: 1rem;"></div>
+        <div id="auth-message" class="my-1"></div>
 
         <button type="submit">完成註冊</button>
     </form>
 
-    <p style="text-align: center; margin-top: 1rem;">已經有帳號了嗎？<a href="/auth/login">返回登入</a></p>
+    <p class="text-center mt-1">已經有帳號了嗎？<a href="/auth/login">返回登入</a></p>
 </article>
 {% endblock %}

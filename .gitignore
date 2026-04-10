@@ -392,3 +392,6 @@ $RECYCLE.BIN/
 # 忽略所有使用者上傳與系統動態生成的圖片/報表
 app/static/uploads/*
 app/static/plots/*
+
+# 忽略私人的 ESP32 測試資料夾
+esp32/myESP32/

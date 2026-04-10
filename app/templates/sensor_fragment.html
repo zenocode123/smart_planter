@@ -1,35 +1,51 @@
 <div id="sensor-data-wrapper">
-    <!-- 狀態同步：確保 Alpine.js 全域狀態與伺服器數據一致 -->
-    <div x-init="checkConnection('{{ data.status }}')" x-effect="watering = {{ 'true' if data.watering else 'false' }}"></div>
+    <!-- 狀態同步：確保 Alpine.js 接收基本的硬體狀態，但不處理 watering (完全交由 app.js 背景輪詢) -->
+    <div x-init="checkConnection('{{ data.status }}')" x-effect="
+             waterEmpty = {{ 'true' if data.water_empty else 'false' }};
+         "></div>
 
     <div class="sensor-cards-container">
-        <div class="sensor-card">
+        <div class="sensor-card {{ 'offline-card' if data.status != 'connected' else '' }}" hx-get="/plants/fragments/modal-chart?metric=temp"
+            hx-target="#metric-modal-container" hx-swap="innerHTML">
             <span>🌡️ 溫度</span>
-            <span class="sensor-value">{{ data.temp if data.temp is not none else '--' }} <small>°C</small></span>
-        </div>
-        <div class="sensor-card">
-            <span>💧 濕度</span>
-            <span class="sensor-value">{{ data.hum if data.hum is not none else '--' }} <small>%</small></span>
-        </div>
-        <div class="sensor-card">
-            <span>🌱 土壤濕度</span>
-            <span class="sensor-value" :style="'color: {{ 'var(--pico-secondary)' if data.moisture and data.moisture < 30 else 'inherit' }}'">
-                {{ data.moisture if data.moisture is not none else '--' }} <small>%</small>
+            <span class="sensor-value">
+                {{ data.temp if data.temp is not none else '--' }} <small>°C</small>
+                {% if data.status != 'connected' %}<small class="offline-badge">🕒 歷史</small>{% endif %}
             </span>
         </div>
-        <div class="sensor-card">
+        <div class="sensor-card {{ 'offline-card' if data.status != 'connected' else '' }}" hx-get="/plants/fragments/modal-chart?metric=hum"
+            hx-target="#metric-modal-container" hx-swap="innerHTML">
+            <span>💧 濕度</span>
+            <span class="sensor-value">
+                {{ data.hum if data.hum is not none else '--' }} <small>%</small>
+                {% if data.status != 'connected' %}<small class="offline-badge">🕒 歷史</small>{% endif %}
+            </span>
+        </div>
+        <div class="sensor-card {{ 'offline-card' if data.status != 'connected' else '' }}" hx-get="/plants/fragments/modal-chart?metric=moisture"
+            hx-target="#metric-modal-container" hx-swap="innerHTML">
+            <span>🌱 土壤濕度</span>
+            <span class="sensor-value {{ 'text-warning' if data.moisture and data.moisture < 30 else '' }}">
+                {{ "%.2f"|format(data.moisture) if data.moisture is not none else '--' }} <small>%</small>
+                {% if data.status != 'connected' %}<small class="offline-badge">🕒 歷史</small>{% endif %}
+            </span>
+        </div>
+        <div class="sensor-card {{ 'offline-card' if data.status != 'connected' else '' }}" hx-get="/plants/fragments/modal-chart?metric=lux"
+            hx-target="#metric-modal-container" hx-swap="innerHTML">
             <span>☀️ 光照</span>
-            <span class="sensor-value">{{ data.lux if data.lux is not none else '--' }} <small>lx</small></span>
+            <span class="sensor-value">
+                {{ data.lux if data.lux is not none else '--' }} <small>lx</small>
+                {% if data.status != 'connected' %}<small class="offline-badge">🕒 歷史</small>{% endif %}
+            </span>
         </div>
     </div>
 
     <!-- 狀態資訊 (Footer OOB) -->
     <div id="dashboard-controls" hx-swap-oob="true">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; opacity: 0.8;">
+        <div class="flex-between mt-1 opacity-80">
             <small>最後更新：{{ update_time }}</small>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <small :style="'color: ' + (isConnected ? '#3b82f6' : '#ef4444')" 
-                       x-text="isConnected ? 'ESP32連線中' : 'ESP32已斷線'"></small>
+            <div class="flex-center gap-sm">
+                <small :class="isConnected ? 'text-primary' : 'text-danger'"
+                    x-text="isConnected ? 'ESP32連線中' : 'ESP32已斷線'"></small>
             </div>
         </div>
     </div>
