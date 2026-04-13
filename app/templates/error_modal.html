@@ -1,0 +1,28 @@
+<dialog id="error-dialog" open class="ai-dialog-card">
+    <div class="ai-dialog-body">
+        <div class="flex-row ai-dialog-header">
+            <span class="ai-dialog-icon">{{ icon | default('❌') }}</span>
+            <div>
+                <h3 class="ai-dialog-title mb-0 text-danger">{{ title }}</h3>
+                <p class="ai-dialog-subtitle mb-0 text-danger">系統安全攔截</p>
+            </div>
+        </div>
+
+        <div class="warning-box" style="margin-top: 1rem; border-left: 4px solid var(--pico-del-color);">
+            <p class="text-danger m-0">{{ message }}</p>
+        </div>
+
+        <div class="ai-dialog-actions" style="margin-top: 2rem;">
+            <button class="outline secondary ai-dialog-btn-cancel mb-0" style="flex: 1;" onclick="document.getElementById('error-dialog').remove(); const o=document.querySelector('[data-error-overlay]'); if(o) o.remove(); window.dispatchEvent(new CustomEvent('htmx:afterRequest'));">
+                確認
+            </button>
+        </div>
+    </div>
+</dialog>
+
+<!-- 外層遮罩 -->
+<div data-error-overlay class="modal-backdrop" onclick="document.getElementById('error-dialog').remove(); this.remove(); window.dispatchEvent(new CustomEvent('htmx:afterRequest'));"></div>
+
+<script>
+    htmx.process(document.getElementById('error-dialog'));
+</script>

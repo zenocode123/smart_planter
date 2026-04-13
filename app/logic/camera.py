@@ -1,62 +1,129 @@
 import cv2
 import time
-import os
 from datetime import datetime
 from pathlib import Path
-try:
-    from picamera2 import Picamera2
-except ImportError:
-    Picamera2 = None
+import subprocess
+import shutil
 
-UPLOAD_DIR = Path("app/static/uploads/history")
 
-def capture_plant_photo() -> str | None:
+
+
+
+UPLOAD_DIR = Path("app/static/uploads/photos")
+# 確保資料夾存在
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def get_ram_path() -> Path:
+    """回傳照片儲存目錄（供 mailer 等模組使用）。"""
+    return UPLOAD_DIR
+
+
+def capture_plant_photo(plant_id: int = 0) -> str | None:
     """
-    使用 Picamera2 獲取影像，並結合 OpenCV 進行尺寸調整與存檔。
-    回傳圖片的相對路徑 (例如 "/static/uploads/history/log_2024...jpg") 以供資料庫儲存。
+    優先使用 Raspberry Pi 5 的 rpicam-still 獲取影像，
+    若無此指令則退回使用 OpenCV 處理。
+    改為存放在實體資料夾中並加上時間戳記，以保存歷史紀錄。
+    回傳用於 API 的虛擬路徑。
     """
-    if Picamera2 is None:
-        print("⚠️ Picamera2 未安裝或無法匯入，跳過拍照。")
-        return None
-        
-    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    filename = f"log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
+    current_time = int(time.time())
+    filename = f"plant_{plant_id}_{current_time}.jpg"
     file_path = UPLOAD_DIR / filename
-    
-    picam2 = None
+
+    # 檢查是否有 rpicam-still
+    if shutil.which("rpicam-still"):
+        try:
+            # 呼叫 rpicam-still 拍照，設定 1 秒 (1000ms) 暖機曝光
+            subprocess.run(
+                [
+                    "rpicam-still",
+                    "-n",  # 不顯示預覽
+                    "--width",
+                    "1280",
+                    "--height",
+                    "960",
+                    "--timeout",
+                    "2000",
+                    "-o",
+                    str(file_path),
+                ],
+                check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+
+            # 使用 OpenCV 讀取並加上浮水印
+            img_bgr = cv2.imread(str(file_path))
+            if img_bgr is not None:
+                timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                cv2.putText(
+                    img_bgr,
+                    timestamp_str,
+                    (20, 40),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 255, 255),
+                    2,
+                    cv2.LINE_AA,
+                )
+                cv2.imwrite(
+                    str(file_path), img_bgr, [int(cv2.IMWRITE_JPEG_QUALITY), 85]
+                )
+
+            # 同步更新 latest_plant_{plant_id}.jpg 供 mailer 使用
+            latest_path = UPLOAD_DIR / f"latest_plant_{plant_id}.jpg"
+            shutil.copy2(str(file_path), str(latest_path))
+
+            return f"/static/uploads/photos/{filename}"
+        except Exception as e:
+            print(f"⚠️ rpicam-still 拍照發生錯誤: {e}，嘗試退回 OpenCV。")
+
+    cap = None
+
     try:
-        picam2 = Picamera2()
-        picam2.start()
-        
-        # 讓相機預熱 2 秒，以利自動曝光估算
+        # 嘗試開啟相機 (通常是 0)
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            print("⚠️ OpenCV 無法開啟相機設備，跳過拍照。")
+            return None
+
         time.sleep(2)
-        
-        # Picamera2 直接擷取 numpy 原生陣列 (RGB 格式)
-        img_array = picam2.capture_array("main")
-        
-        # OpenCV 處理：Picamera2 取得的是 RGB，OpenCV 存檔需要 BGR
-        img_bgr = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
-        
-        # OpenCV 處理：縮放解析度以節省儲存空間與 Email 附件大小
-        # 例如固定寬度 1280，等比例縮放
+
+        ret, frame = cap.read()
+        if not ret:
+            print("⚠️ OpenCV 無法從相機讀取畫面，跳過拍照。")
+            return None
+
+        img_bgr = frame
+
         h, w = img_bgr.shape[:2]
         new_w = 1280
         new_h = int((new_w / w) * h)
         img_resized = cv2.resize(img_bgr, (new_w, new_h))
-        
-        # OpenCV 處理：可加入時間戳記浮水印 (選配功能，可註解)
-        timestamp_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        cv2.putText(img_resized, timestamp_str, (20, 40), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2, cv2.LINE_AA)
-        
-        # 最終利用 OpenCV 參數進行 JPEG 存檔
+
+        timestamp_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        cv2.putText(
+            img_resized,
+            timestamp_str,
+            (20, 40),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 255),
+            2,
+            cv2.LINE_AA,
+        )
+
         cv2.imwrite(str(file_path), img_resized, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
-        
-        return f"/static/uploads/history/{filename}"
-        
+
+        # 同步更新 latest_plant_{plant_id}.jpg 供 mailer 使用
+        latest_path = UPLOAD_DIR / f"latest_plant_{plant_id}.jpg"
+        shutil.copy2(str(file_path), str(latest_path))
+
+        return f"/static/uploads/photos/{filename}"
+
     except Exception as e:
         print(f"❌ 相機拍照任務失敗: {e}")
         return None
     finally:
-        if picam2:
-            picam2.stop()
+        if cap is not None:
+            cap.release()

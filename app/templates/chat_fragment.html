@@ -12,6 +12,7 @@
      hx-swap="outerHTML"
      hx-disabled-elt="#chat-send-btn, .chat-input">
     <div class="message-bubble assistant">
+        <img src="{{ plant.photo_path if plant and plant.photo_path else '/static/images/IMG_plant.jpg' }}" class="message-avatar" alt="plant">
         <div class="bubble-content thinking">
             <span>.</span><span>.</span><span>.</span>
         </div>
@@ -22,6 +23,7 @@
 {% if ai_msg %}
 <!-- 最終的 AI 回覆片段 -->
 <div class="message-bubble assistant">
+    <img src="{{ plant.photo_path if plant and plant.photo_path else '/static/images/IMG_plant.jpg' }}" class="message-avatar" alt="plant">
     <div class="bubble-content">{{ ai_msg.content }}</div>
 </div>
 {% endif %}

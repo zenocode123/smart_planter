@@ -4,9 +4,9 @@
 
 {% if msg %}
 <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition
-     style="position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 3000;">
-    <article style="padding: 0.75rem 1.5rem; border: 1px solid var(--pico-ins-color); background: var(--pico-card-background-color);">
-        <span style="color: var(--pico-ins-color);">✅ {{ msg }}</span>
+    class="toast-notice-container">
+    <article class="toast-notice-card">
+        <span class="toast-notice-text">✅ {{ msg }}</span>
     </article>
 </div>
 {% endif %}
@@ -15,14 +15,14 @@
     <div class="dashboard-layout">
         <!-- 植物卡片 -->
         <div class="plant-card">
-            <div style="padding: 1rem;">
-                <h3 style="margin-bottom: 0.5rem; text-align: center;">{{ plant.nickname if plant else '未命名植物' }}</h3>
-                <p style="text-align: center; color: var(--pico-muted-color); margin-bottom: 1rem;">{{ plant.species if plant else '未知品種' }}</p>
-                <div style="aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: #f0f0f0;">
+            <div class="card-padding">
+                <h3 class="text-center" style="margin-bottom: 0.5rem;">{{ plant.nickname if plant else '未命名植物' }}</h3>
+                <p class="text-center text-muted mb-1">{{ plant.species if plant else '未知品種' }}</p>
+                <div class="plant-avatar-container">
                     {% if plant and plant.photo_path %}
-                    <img src="{{ plant.photo_path }}" alt="Plant" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img src="{{ plant.photo_path }}" alt="Plant" class="img-cover">
                     {% else %}
-                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 5rem;">🌿</div>
+                    <div class="avatar-placeholder">🌿</div>
                     {% endif %}
                 </div>
             </div>
@@ -30,40 +30,56 @@
 
         <!-- 數據與控制 -->
         <div class="sensor-cards-container">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h4 style="margin: 0;">感測數值</h4>
-                <button @click="triggerRefresh()" class="outline secondary" style="border: none; padding: 0.25rem; width: auto; margin: 0;">
-                    <svg :class="isRefreshing ? 'rotating' : ''" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            <div class="flex-between">
+                <h4 class="mb-0">感測數值</h4>
+                <button @click="triggerRefresh()" class="outline secondary btn-ghost" aria-label="更新感測器資料">
+                    <svg :class="isRefreshing ? 'rotating' : ''" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <path d="M21 2v6h-6" />
+                        <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                        <path d="M3 22v-6h6" />
+                        <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+                    </svg>
                 </button>
             </div>
 
-            <div id="sensor-container" 
-                 hx-get="/plants/sensors" 
-                 hx-trigger="load, every {{ interval }}s" 
-                 hx-swap="innerHTML">
-                <div aria-busy="true" style="text-align: center; padding: 2rem;">載入中...</div>
+            <div id="sensor-container" hx-get="/plants/sensors" hx-trigger="load, every {{ interval }}s"
+                hx-swap="innerHTML">
+                <div aria-busy="true" class="center-padding-lg">載入中...</div>
             </div>
 
-             <div id="log-container" 
-                  hx-get="/plants/logs/latest" 
-                  hx-trigger="load, every 30s" 
-                  hx-swap="innerHTML">
-                 <div aria-busy="true" style="text-align: center; padding: 2rem;">🧠 正在讀取 AI 分析...</div>
-             </div>
-
-            <!-- OOB 目標：連線狀態與更新時間 -->
+            <!-- OOB 目標：連線狀態與更新時間定位於此 (維持於感測器下方) -->
             <div id="dashboard-controls"></div>
+        </div>
+    </div>
 
-            <div style="margin-top: 1rem;">
-                <button hx-post="/plants/water" 
-                        hx-target="#sensor-container" 
-                        @click="watering = true; setTimeout(() => watering = false, 5000)" 
-                        class="contrast"
-                        style="width: 100%; font-weight: bold; padding: 1rem;">
-                    💦 澆水
+    <!-- 換行：左邊 AI 分析，右邊澆水按鈕 (等高) -->
+    <div class="dashboard-layout mt-2" style="align-items: stretch;">
+        <!-- 左側：AI 分析 -->
+        <div id="log-container" style="width: 100%; max-width: 450px; display: flex; flex-direction: column;" hx-get="/plants/logs/latest" hx-trigger="load, every 30s" hx-swap="innerHTML">
+            <div aria-busy="true" class="center-padding-lg" style="margin: auto;">🧠 正在讀取 AI 分析...</div>
+        </div>
+
+        <!-- 右側：澆水按鈕 -->
+        <div style="width: 100%; max-width: 450px; display: flex; flex-direction: column; justify-content: center;">
+            <div x-data="{ validating: false }"
+                @start-watering-client.window="watering = true; validating = false; wateringRequestTime = $event.detail && $event.detail.cmdTime ? $event.detail.cmdTime : (Date.now() / 1000); const m = document.getElementById('water-warning-dialog'); if(m) m.remove();"
+                @show-toast.window="window.showToast($event.detail.message, $event.detail.type);"
+                style="display: flex;">
+                <button hx-post="/plants/water" hx-target="#water-modal-container" hx-swap="innerHTML"
+                    @click="validating = true" @htmx:after-request="validating = false"
+                    class="contrast btn-large-primary" :disabled="!isConnected || watering || validating"
+                    style="margin: 0; width: 100%; padding: 0.8rem 1rem;">
+                    <span x-show="!validating">💦 啟動系統澆水</span>
+                    <span x-show="validating" style="display: none;">⏳ 傳輸中...</span>
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- 換行：左邊圖表，右邊照片 -->
+    <div id="chart-photo-target">
+        <!-- 這個區塊會透過 log_fragment.html 的 OOB 替換 -->
     </div>
 </section>
 {% endblock %}

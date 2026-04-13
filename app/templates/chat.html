@@ -2,8 +2,8 @@
 
 {% block content %}
 <section class="chat-container">
-    <div class="page-title" style="text-align: center; margin-bottom: 1.5rem;">
-        <h2 style="margin: 0;">💬 與 {{ plant.nickname if plant else '植物' }} 對話</h2>
+    <div class="page-title text-center" style="margin-bottom: 1.5rem;">
+        <h2 class="mb-0">💬 與 {{ plant.nickname if plant else '植物' }} 對話</h2>
         <p style="color: var(--pico-muted-color);">你的植物現在具備了獨特的人格，試著跟它聊聊吧！</p>
     </div>
 
@@ -11,29 +11,21 @@
         <!-- 對話區域 -->
         <div id="chat-messages" class="chat-messages">
             {% for msg in messages %}
-                <div class="message-bubble {{ 'user' if msg.role == 'user' else 'assistant' }}">
-                    <div class="bubble-content">{{ msg.content }}</div>
-                </div>
-            {% endfor %}
-        </div>
+            <div class="message-bubble {{ 'user' if msg.role == 'user' else 'assistant' }}">
+                {% if msg.role == 'assistant' %}
+                <img src="{{ plant.photo_path if plant and plant.photo_path else '/static/images/IMG_plant.jpg' }}"
+                    class="message-avatar" alt="plant">
+                {% endif %}
 
-        <!-- Loading 指示器：放在 chat-messages 外面，避免 hx-swap 位置衝突 -->
-        <div id="chat-loading" class="chat-loading-area">
-            <div class="message-bubble assistant">
-                <div class="bubble-content thinking">
-                    <span>.</span><span>.</span><span>.</span>
-                </div>
+                <div class="bubble-content">{{ msg.content }}</div>
             </div>
+            {% endfor %}
         </div>
 
         <!-- 輸入區域 -->
         <div class="chat-input-area">
-            <form id="chat-form"
-                  hx-post="/chat/"
-                  hx-target="#chat-messages"
-                  hx-swap="beforeend"
-                  hx-disabled-elt="#chat-send-btn, .chat-input"
-                  hx-on::after-request="this.reset(); scrollToBottom();">
+            <form id="chat-form" hx-post="/chat/" hx-target="#chat-messages" hx-swap="beforeend"
+                hx-disabled-elt="#chat-send-btn, .chat-input" hx-on::after-request="this.reset(); scrollToBottom();">
                 <div class="chat-input-row">
                     <input name="message" placeholder="輸入訊息..." required autocomplete="off" class="chat-input">
                     <button type="submit" id="chat-send-btn" class="chat-send-btn">發送</button>
@@ -45,12 +37,12 @@
 
 
 <script>
-function scrollToBottom() {
-    const el = document.getElementById('chat-messages');
-    if (el) el.scrollTop = el.scrollHeight;
-}
-// 初始加載與 HTMX 插入後都捲到底
-document.addEventListener('DOMContentLoaded', scrollToBottom);
-document.addEventListener('htmx:afterSwap', scrollToBottom);
+    function scrollToBottom() {
+        const el = document.getElementById('chat-messages');
+        if (el) el.scrollTop = el.scrollHeight;
+    }
+    // 初始加載與 HTMX 插入後都捲到底
+    document.addEventListener('DOMContentLoaded', scrollToBottom);
+    document.addEventListener('htmx:afterSwap', scrollToBottom);
 </script>
 {% endblock %}

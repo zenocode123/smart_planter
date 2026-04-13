@@ -19,6 +19,8 @@
     --glass-border: rgba(255, 255, 255, 0.5);
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
     --bubble-user: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    --bubble-assistant: rgba(0, 0, 0, 0.06);
+    --bubble-assistant-border: rgba(0, 0, 0, 0.1);
 }
 
 [data-theme="dark"] {
@@ -29,6 +31,8 @@
     --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
     --pico-card-background-color: transparent;
     --bubble-user: linear-gradient(135deg, #059669 0%, #047857 100%);
+    --bubble-assistant: rgba(255, 255, 255, 0.12);
+    --bubble-assistant-border: rgba(255, 255, 255, 0.15);
 }
 
 body {
@@ -52,8 +56,35 @@ body {
 /* =========================================
    Mobile-First 按鈕微動畫與手指優化
 ========================================= */
-button, input, select, textarea {
+button, input:not([type="checkbox"]):not([type="radio"]), select, textarea {
     min-height: 48px; /* 遵守 @mobile-design: Touch target minimum */
+}
+
+/* 確保 checkbox 維持原本方框行為，不受全域高度影響 */
+input[type="checkbox"] {
+    min-height: auto;
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 1; 
+    cursor: pointer;
+    vertical-align: middle;
+    margin-top: 0px; 
+    margin-right: 0.5rem;
+}
+
+/* Checkbox 與文字的精準對齊容器 */
+.checkbox-align-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+}
+.checkbox-align-row input[type="checkbox"] {
+    margin: 0 !important;
+}
+.checkbox-align-text {
+    line-height: 1;
+    padding-top: 2px;
 }
 
 /* 特效行為按鈕 (如 澆水, 發送對話) */
@@ -123,6 +154,7 @@ button.contrast:active, .chat-send-btn:active, #save-btn:active {
 [data-theme="dark"] .nav-btn-icon { background: rgba(255, 255, 255, 0.06) !important; }
 .nav-btn-icon:hover { background: rgba(0, 0, 0, 0.08) !important; transform: scale(1.08); }
 [data-theme="dark"] .nav-btn-icon:hover { background: rgba(255, 255, 255, 0.12) !important; }
+.nav-btn-icon:focus { outline: none !important; box-shadow: none !important; }
 
 /* =========================================
    Sidebar & Overlay
@@ -130,7 +162,10 @@ button.contrast:active, .chat-send-btn:active, #save-btn:active {
 #overlay {
     position: fixed; inset: 0;
     background: rgba(0, 0, 0, 0.5); z-index: 9998;
-    backdrop-filter: blur(4px); cursor: pointer;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); cursor: pointer;
+}
+[data-theme="light"] #overlay {
+    background: rgba(0, 0, 0, 0.25);
 }
 
 #sidebar {
@@ -171,6 +206,7 @@ button.contrast:active, .chat-send-btn:active, #save-btn:active {
 .sensor-card {
     display: flex; justify-content: space-between; align-items: center;
     padding: 1.25rem 1.5rem; border-radius: 20px;
+    cursor: pointer;
     background: var(--glass-bg); backdrop-filter: blur(10px);
     border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
     transition: transform 0.2s;
@@ -212,9 +248,41 @@ button.contrast:active, .chat-send-btn:active, #save-btn:active {
     display: flex; flex-direction: column; gap: 1rem;
 }
 
-.message-bubble { max-width: 82%; display: flex; animation: slideUp 0.3s ease forwards; }
-.message-bubble.user { align-self: flex-end; }
-.message-bubble.assistant { align-self: flex-start; }
+.message-bubble { 
+    max-width: 82%; 
+    display: flex; 
+    animation: slideUp 0.3s ease forwards; 
+}
+.message-bubble.user { 
+    align-self: flex-end; 
+}
+.message-bubble.assistant { 
+    align-self: flex-start;
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    position: relative;
+    /* ❌ 已移除 filter: drop-shadow — Firefox Bug：父 filter + 子 backdrop-filter 會讓子元素完全消失 */
+}
+
+.assistant-wrapper {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    max-width: 100%;
+}
+
+.message-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid var(--glass-border);
+    background: var(--glass-bg);
+}
+
+.user-avatar { display: none; }
 
 .bubble-content {
     padding: 0.85rem 1.25rem;
@@ -227,17 +295,58 @@ button.contrast:active, .chat-send-btn:active, #save-btn:active {
     color: white; border-bottom-right-radius: 6px;
 }
 
+/* 1. 氣泡主體 */
 .assistant .bubble-content {
-    background: var(--pico-muted-background-color);
-    color: var(--pico-color); border-bottom-left-radius: 6px;
+    background: #e8f0ec;
+    border: 1px solid var(--bubble-assistant-border) !important;
+    color: var(--pico-color); 
+    border-radius: 18px !important;
+    position: relative;
+    z-index: 1;
+    margin-top: 5px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
+[data-theme="dark"] .assistant .bubble-content {
+    background: rgba(255, 255, 255, 0.15);
+}
+@supports (backdrop-filter: blur(1px)) {
+    .assistant .bubble-content {
+        background: var(--bubble-assistant);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+}
+
+/* 2. 氣泡小尾巴 — 完全在氣泡外側，右邊緣貼齊氣泡邊框外緣 */
+.assistant .bubble-content::before {
+    content: "";
+    position: absolute;
+    top: 15px;
+    left: -11px; /* 10px 尾巴寬 + 1px 邊框 = 完全在氣泡外側 */
+    width: 10px;
+    height: 12px;
+    clip-path: polygon(100% 0, 0 50%, 100% 100%);
+    transform: none;
+    z-index: 0;
+    background: #e8f0ec;
+}
+[data-theme="dark"] .assistant .bubble-content::before {
+    background: rgba(255, 255, 255, 0.15);
+}
+@supports (backdrop-filter: blur(1px)) {
+    .assistant .bubble-content::before {
+        background: var(--bubble-assistant);
+    }
+}
+
 
 .chat-input-area {
     padding: 1.25rem; border-top: 1px solid var(--glass-border);
-    background: rgba(255,255,255,0.1);
+    background: transparent;
 }
 .chat-input-row { display: flex; gap: 0.75rem; align-items: center; width: 100%; }
-.chat-input-row input.chat-input { flex: 1 1 auto; margin-bottom: 0 !important; height: 3.5rem; border-radius: 20px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); }
+.chat-input-row input.chat-input { flex: 1; margin-bottom: 0 !important; height: 48px; border-radius: 24px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02); }
+.chat-input-row button.chat-send-btn { flex: 0 0 auto; width: auto; padding: 0 1.5rem; margin-bottom: 0 !important; height: 48px; display: flex; align-items: center; justify-content: center; }
 
 /* =========================================
    Animations & Utilites
@@ -253,3 +362,557 @@ button.contrast:active, .chat-send-btn:active, #save-btn:active {
 .htmx-indicator { display: none; }
 .htmx-request .htmx-indicator { display: block; }
 .htmx-request.htmx-indicator { display: block; }
+
+/* =========================================
+   Utility and Component Refactors
+========================================= */
+
+/* Layout & Utilities */
+.flex-column { display: flex; flex-direction: column; }
+.flex-row { display: flex; flex-direction: row; }
+.flex-center { display: flex; justify-content: center; align-items: center; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.text-center { text-align: center; }
+.mb-0 { margin-bottom: 0 !important; }
+.mb-1 { margin-bottom: 1rem; }
+.mt-1 { margin-top: 1rem; }
+.mt-2 { margin-top: 2rem; }
+
+/* Dashboard Cards / Containers */
+.dashboard-card {
+    background: var(--pico-card-sectioning-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.plant-avatar-container {
+    aspect-ratio: 1; 
+    border-radius: 12px; 
+    overflow: hidden; 
+    background: #f0f0f0;
+}
+
+/* Modal Dialog Overlays */
+.modal-backdrop {
+    position: fixed; inset: 0;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(0, 0, 0, 0.5); /* Dim the background to make modal pop */
+    z-index: 1000;
+}
+[data-theme="light"] .modal-backdrop {
+    background: rgba(0, 0, 0, 0.25); /* Lighter dim for light theme */
+}
+
+.ai-dialog-card {
+    position: fixed; top: 0; left: 0;
+    transform: none; /* Remove translate */
+    z-index: 10000;
+    width: 100vw; max-width: none;
+    height: 100vh; max-height: none;
+    background: var(--pico-card-sectioning-background-color);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border-radius: 0; /* No rounded corners */
+    box-shadow: none; /* No shadow since it covers screen */
+    overflow-y: auto;
+    padding: 0;
+    margin: 0;
+    border: none;
+    color: var(--pico-color, #eee);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+[data-theme="dark"] .ai-dialog-card {
+    /* override any native pico styles if necessary, but keep it transparent */
+    background: transparent !important;
+}
+
+.dialog-header-warning {
+    background: linear-gradient(135deg, rgba(255, 100, 100, 0.1), rgba(200, 50, 50, 0.05));
+    border-bottom: 1px solid rgba(255, 100, 100, 0.2);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.dialog-header-success {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+    border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+.badge-success { background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3);}
+.badge-warning { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);}
+
+/* Ghost Buttons */
+.btn-ghost {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+    padding: 0.5rem;
+    width: auto;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.btn-ghost:hover {
+    opacity: 0.7;
+}
+
+/* Chat Bubble Container (Log Fragment) */
+.ai-chat-bubble {
+    background: rgba(255,255,255,0.05);
+    border-radius: 0 8px 8px 0;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.2rem;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Color Bars for AI Modal */
+.color-bar-success {
+    height: 6px;
+    border-radius: 0;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: linear-gradient(90deg, #22c55e, #4ade80);
+}
+.color-bar-warning {
+    height: 6px;
+    border-radius: 0;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+/* Sensor Grid */
+.sensor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.82rem;
+}
+.sensor-grid-item {
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+}
+
+/* Gradient buttons explicitly for AI Confirm */
+.btn-gradient-success {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: opacity 0.2s;
+}
+.btn-gradient-success:hover { opacity: 0.88; color: #fff; }
+
+.btn-gradient-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transition: opacity 0.2s;
+}
+.btn-gradient-warning:hover { opacity: 0.88; color: #fff; }
+
+/* Sidebar and Navigation */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--pico-color);
+}
+.sidebar-link:hover {
+    background-color: var(--pico-form-element-background-color);
+}
+.sidebar-header-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+    padding-bottom: 1rem;
+}
+.sidebar-title {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.nav-icon-btn {
+    border: none;
+    padding: 0.5rem;
+    width: auto;
+    margin: 0;
+    box-shadow: none;
+    background: transparent !important;
+    cursor: pointer;
+    color: inherit !important;
+}
+.nav-icon-btn svg {
+    stroke: currentColor !important;
+}
+.nav-theme-btn {
+    border: none !important;
+    padding: 0.25rem 0.5rem;
+    border-radius: 50%;
+    font-size: 1.25rem;
+    font-family: monospace;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
+}
+.nav-theme-btn:hover, .nav-theme-btn:focus, .nav-theme-btn:active {
+    border: none !important;
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* User Badges */
+.nav-badge-user {
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    background: var(--pico-primary-background);
+    color: var(--pico-primary-inverse);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+.nav-badge-guest {
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    background: var(--pico-secondary-background);
+    color: var(--pico-secondary-inverse);
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+/* Watering Overlay Component */
+.watering-overlay-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5); /* Dim the background to make modal pop */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 9999;
+}
+[data-theme="light"] .watering-overlay-bg {
+    background: rgba(0, 0, 0, 0.25);
+}
+.watering-modal-card {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    border: none; /* Removed border */
+    padding: 2.5rem;
+    max-width: none; /* Full max width */
+    width: 100vw; /* Full screen */
+    height: 100vh; /* Full screen */
+    box-shadow: none; /* Removed shadow */
+    border-radius: 0; /* Remove rounded corners */
+    background: transparent; /* Makes the wrapper's background show through */
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+[data-theme="dark"] .watering-modal-card {
+    box-shadow: none;
+    border: none;
+    background: transparent;
+}
+
+/* Toast / Notification Container */
+.toast-notice-container {
+    position: fixed; top: 1rem; left: 50%;
+    transform: translateX(-50%); z-index: 3000;
+}
+.toast-notice-card {
+    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--pico-ins-color);
+    background: var(--pico-card-background-color);
+}
+.toast-notice-text { color: var(--pico-ins-color); }
+
+/* Text Utilities */
+.text-muted { color: var(--pico-muted-color); }
+.text-primary { color: var(--pico-primary); }
+.text-bold { font-weight: bold; }
+.text-sm { font-size: 0.8rem; }
+.text-normal { font-weight: normal; }
+
+/* Image Containers & Placeholders */
+.img-fluid { width: 100%; height: auto; display: block; }
+.img-cover { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 5rem; }
+.card-padding { padding: 1rem; }
+.center-padding-lg { text-align: center; padding: 2rem; }
+
+/* Log Fragment Specific Custom Cards */
+.log-analysis-card {
+    background: var(--pico-card-sectioning-background-color);
+    border: 1px solid var(--pico-muted-border-color);
+    margin-bottom: 2rem;
+}
+.image-box {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--pico-muted-border-color);
+    background: var(--pico-card-background-color);
+}
+.image-box-dark {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--pico-muted-border-color);
+    aspect-ratio: 16/9;
+    background: #000;
+}
+.empty-photo { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #777; }
+.empty-state-card {
+    text-align: center;
+    color: var(--pico-muted-color);
+    padding: 2rem;
+    border: 1px dashed var(--pico-muted-border-color);
+    border-radius: 8px;
+    margin-top: 1.5rem;
+}
+.btn-large-primary {
+    width: 100%;
+    font-weight: bold;
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Auth & Login */
+.login-card { max-width: 400px; margin: 2rem auto; }
+.text-success { color: var(--pico-ins-color); }
+.text-warning { color: #eab308; }
+.border-success { border: 2px solid var(--pico-ins-color); }
+.border-warning { border: 2px solid #eab308; }
+
+/* Photo Upload specific */
+.position-relative { position: relative; }
+.photo-anim-dim { filter: brightness(0.8); transition: filter 0.3s ease; }
+.photo-success-icon {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    color: #10B981; font-size: 4rem; text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.btn-auto-width { width: auto; }
+.opacity-80 { opacity: 0.8; }
+
+@keyframes popIn {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Additional Utilities for Settings and Register */
+.mb-2 { margin-bottom: 2rem; }
+.my-1 { margin-top: 1rem; margin-bottom: 1rem; }
+.p-1 { padding: 1rem; }
+.d-none { display: none !important; }
+.text-danger { color: var(--pico-del-color); }
+.text-3xl { font-size: 3rem; }
+.progress-sm { max-width: 200px; margin: 0 auto; }
+.loading-text { margin: 0.5rem 0 0; opacity: 0.7; font-size: 0.9rem; }
+
+/* Final Utilities for Reports, Sensors, and Modals */
+.m-0 { margin: 0 !important; }
+.mb-sm { margin-bottom: 0.5rem; }
+.d-block { display: block; }
+.max-w-400 { width: 100%; max-width: 400px; }
+.btn-icon-text { margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+.gap-sm { gap: 0.5rem; }
+.warning-box {
+    background: var(--pico-card-sectioning-background-color);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+.pl-1-5 { padding-left: 1.5rem; }
+.btn-danger-outline {
+    border-color: var(--pico-del-color) !important;
+    color: var(--pico-del-color) !important;
+}
+
+/* AI Dialog Refactored Classes */
+.ai-dialog-body {
+    padding: 1.5rem 1.8rem 1.8rem;
+    width: 100%;
+    max-width: 440px;
+    background: var(--pico-background-color);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+[data-theme="dark"] .ai-dialog-body {
+    background: #181c25; /* Solid dark background */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+.ai-dialog-header {
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+.ai-dialog-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+.ai-dialog-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+.ai-dialog-subtitle {
+    font-size: 0.8rem;
+    opacity: 0.6;
+}
+.ml-auto {
+    margin-left: auto;
+}
+.ai-chat-bubble-warning {
+    border-left-color: #f59e0b !important;
+}
+.ai-dialog-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+.ai-dialog-btn-cancel {
+    flex: 1;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+.ai-dialog-btn-confirm {
+    flex: 1.5;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.ai-dialog-footer-text {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    opacity: 0.4;
+}
+
+/* =========================================
+   Log Fragment & AI Analysis Output
+========================================= */
+.log-ai-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    margin: 0;
+    padding: 1rem 1.5rem;
+    box-sizing: border-box;
+    cursor: default;
+}
+
+.log-ai-header {
+    width: 100%;
+    margin-bottom: 0.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.log-ai-text {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--pico-color);
+}
+
+.log-col {
+    width: 100%;
+    max-width: 450px;
+    display: flex;
+    flex-direction: column;
+}
+
+.log-image-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    height: 100%;
+    background: #ffffff; /* 始終保持白色背景，讓趨勢圖無縫填滿 */
+}
+
+.log-image-wrapper.align-center { align-items: center; }
+.log-image-wrapper.align-stretch { align-items: stretch; background: transparent; } /* 只有照片區保持透明/深色 */
+
+.log-image-fit-contain { width: 100%; height: 100%; object-fit: contain; }
+.log-image-fit-cover { width: 100%; height: 100%; object-fit: cover; }
+
+.empty-photo {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.2);
+}
+
+/* Fix native dialog background transparency in dark mode */
+[data-theme="dark"] dialog article {
+    background: #181c25 !important;
+}
+
+.dashboard-layout.align-stretch {
+    align-items: stretch;
+}
+
+.log-empty-state {
+    text-align: center;
+    color: var(--pico-muted-color);
+    padding: 1rem 0;
+}
+
+/* 斷線時的歷史數據樣式 */
+.offline-card {
+    opacity: 0.7;
+    filter: grayscale(40%);
+    border-style: dashed !important;
+}
+
+.offline-badge {
+    font-size: 0.65rem;
+    color: var(--pico-muted-color);
+    border: 1px solid var(--pico-muted-color);
+    padding: 2px 6px;
+    border-radius: 8px;
+    margin-left: 6px;
+    font-weight: normal;
+    vertical-align: middle;
+    white-space: nowrap;
+}

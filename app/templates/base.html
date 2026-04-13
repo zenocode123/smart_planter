@@ -10,11 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Pico CSS -->
     <link rel="stylesheet" href="/static/css/pico.green.min.css">
     <!-- Global Styles -->
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=20260413f">
 
     <!-- Scripts -->
     <script src="/static/js/htmx.min.js"></script>
@@ -39,7 +39,7 @@
         document.documentElement.setAttribute('data-theme', initialTheme);
         document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('theme-toggle');
-            if(btn) btn.innerText = initialTheme === 'light' ? '🌞' : '🌙';
+            if (btn) btn.innerText = initialTheme === 'light' ? '🌞' : '🌙';
         });
     </script>
 
@@ -50,22 +50,29 @@
 
     <!-- Sidebar Component (Only for Logged-in Users) -->
     {% if user %}
-    <div id="overlay" x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false" style="display: none;"></div>
+    <div id="overlay" class="modal-backdrop" x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false" style="display: none;">
+    </div>
     <aside id="sidebar" :class="sidebarOpen ? 'open' : ''">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--pico-muted-border-color); padding-bottom: 1rem;">
-            <h3 style="margin: 0; font-size: 1.25rem;">主選單</h3>
-            <button @click="sidebarOpen = false" class="outline secondary" style="border: none; padding: 0.5rem; width: auto; margin: 0; box-shadow: none;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        <div class="sidebar-header-box">
+            <h3 class="sidebar-title">主選單</h3>
+            <button @click="sidebarOpen = false" class="outline secondary nav-icon-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
             </button>
         </div>
         <nav>
             <ul style="display: block;">
-                <li><a href="/" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">🏠 首頁</a></li>
-                <li><a href="/plants/profile" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">🌱 植物設定</a></li>
-                <li><a href="/plants/reports" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">📊 歷史報表</a></li>
-                <li><a href="/chat" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">💬 與植物對話</a></li>
-                <li><a href="#" style="display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0.5rem; border-radius: 8px;">⚙️ 系統設定</a></li>
-                <li><hr style="margin: 1rem 0;"></li>
+                <li><a href="/" class="sidebar-link">🏠 首頁</a></li>
+                <li><a href="/plants/profile" class="sidebar-link">🌱 植物設定</a></li>
+                <li><a href="/plants/reports" class="sidebar-link">📊 歷史報表</a></li>
+                <li><a href="/chat" class="sidebar-link">💬 與植物對話</a></li>
+                <li><a href="#" class="sidebar-link">⚙️ 系統設定</a></li>
+                <li>
+                    <hr class="mt-1 mb-1">
+                </li>
                 <li>
                     <button class="outline" hx-post="/auth/logout" style="width: 100%; margin-top: 1rem;">🚪 登出</button>
                 </li>
@@ -79,10 +86,14 @@
         <nav class="nav-grid">
             <!-- Left Side -->
             <div class="nav-left">
-                <button @click="sidebarOpen = true" class="nav-btn-icon" 
-                        style="{% if not user %}visibility: hidden; pointer-events: none;{% endif %}"
-                        aria-label="開啟選單">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                <button @click="sidebarOpen = true" class="nav-icon-btn"
+                    style="{% if not user %}visibility: hidden; pointer-events: none;{% endif %}" aria-label="開啟選單">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
                 </button>
             </div>
 
@@ -92,12 +103,13 @@
             </div>
 
             <!-- Right Side -->
-            <div class="nav-right" style="display: flex; align-items: center; gap: 1rem;">
-                <button id="theme-toggle" class="outline secondary" style="border: none; padding: 0.25rem 0.5rem; border-radius: 50%; font-size: 1.25rem; font-family: monospace; background: transparent;" onclick="toggleTheme()" title="切換主題">🌞</button>
+            <div class="nav-right flex-row" style="align-items: center; gap: 1rem;">
+                <button id="theme-toggle" class="outline secondary nav-theme-btn"
+                    onclick="toggleTheme()" title="切換主題">🌞</button>
                 {% if user %}
-                <span class="user-badge" style="padding: 0.35rem 0.85rem; border-radius: 20px; background: var(--pico-primary-background); color: var(--pico-primary-inverse); font-size: 0.85rem;">Hi, <strong>{{ user.username }}</strong></span>
+                <span class="nav-badge-user">Hi, <strong>{{ user.username }}</strong></span>
                 {% else %}
-                <span class="user-badge" style="padding: 0.35rem 0.85rem; border-radius: 20px; background: var(--pico-secondary-background); color: var(--pico-secondary-inverse); font-size: 0.75rem;">Guest</span>
+                <span class="nav-badge-guest">Guest</span>
                 {% endif %}
             </div>
         </nav>
@@ -111,11 +123,15 @@
     {% if user %}
     <!-- 全域元件：放置於 Body 底層以降噪並確保定位精準 -->
     <div id="global-ui-root" x-cloak>
+        <!-- 用來接收後端安全阻斷 Modal 或是 AI 建議的容器 -->
+        <div id="water-modal-container"></div>
+        <!-- 用來接收感測器資料專屬圖表的容器 -->
+        <div id="metric-modal-container"></div>
+        
         <!-- 澆水 Overlay (採用絕對置中方案) -->
-        <div x-show="watering" x-transition.opacity 
-             style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 9999;">
-            <article style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; border: 1px solid var(--pico-ins-color); padding: 2.5rem; max-width: 90%; width: 350px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); border-radius: 20px; background: var(--pico-card-background-color); margin: 0;">
-                <header style="border: none; background: transparent; padding: 0;">
+        <div x-show="watering" x-transition.opacity class="watering-overlay-bg">
+            <article class="watering-modal-card">
+                <header class="mb-0" style="border: none; background: transparent; padding: 0;">
                     <h3 style="color: var(--pico-ins-color); margin: 0;">💧 正在灌溉中</h3>
                 </header>
                 <p style="margin: 1.5rem 0; opacity: 0.8;">ESP32 正在執行指令，請稍候</p>

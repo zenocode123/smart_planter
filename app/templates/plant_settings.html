@@ -2,31 +2,33 @@
 
 {% block content %}
 <section class="settings-card">
-    <div class="page-title" style="text-align: center; margin-bottom: 2rem;">
-        <h2 style="margin: 0;">🌱 植物檔案設定</h2>
-        <p style="color: var(--pico-muted-color);">設定基本的植物資訊，讓系統提供更好的建議</p>
+    <div class="page-title text-center mb-2">
+        <h2 class="mb-0">🌱 植物檔案設定</h2>
+        <p class="text-muted">設定基本的植物資訊，讓系統提供更好的建議</p>
     </div>
 
     <article>
         <!-- 照片上傳區域 -->
-        <div class="photo-upload-area">
+        <div class="photo-upload-area" style="display: flex; flex-direction: column; align-items: center; gap: 1.5rem; margin-bottom: 2rem;">
             <div class="photo-preview-box" id="photo-preview">
                 {% if plant and plant.photo_path %}
                 <img src="{{ plant.photo_path }}" alt="Plant Photo">
                 {% else %}
-                <span style="font-size: 3rem;">🌿</span>
+                <span class="text-3xl">🌿</span>
                 {% endif %}
             </div>
             
             <form hx-post="/plants/photo"
                   hx-target="#photo-preview"
                   hx-swap="innerHTML"
-                  hx-encoding="multipart/form-data">
+                  hx-encoding="multipart/form-data"
+                  style="text-align: center; margin-bottom: 0;">
                 <input type="file" name="photo" id="photo-input" accept=".jpg,.jpeg,.png,.webp"
-                       style="display: none;"
+                       class="d-none"
                        @change="$el.closest('form').requestSubmit()">
-                <button type="button" id="upload-btn" class="outline secondary" style="width: auto;"
-                        @click="document.getElementById('photo-input').click()">
+                <button type="button" id="upload-btn" class="outline secondary btn-auto-width"
+                        @click="document.getElementById('photo-input').click()"
+                        style="margin-bottom: 0;">
                     📷 上傳照片
                 </button>
             </form>
@@ -36,14 +38,14 @@
 
         <!-- 植物資料表單 -->
         <form hx-post="/plants/profile" hx-target="#form-message"
-              hx-indicator="#save-loading" hx-disabled-elt="#save-btn">
+              hx-indicator="#save-loading" hx-disabled-elt="#save-btn" style="margin-bottom: 0;">
             <label for="nickname">
-                植物暱稱 <small style="color: var(--pico-del-color);">*必填</small>
+                植物暱稱 <small class="text-danger">*必填</small>
                 <input type="text" id="nickname" name="nickname" value="{{ plant.nickname if plant else '' }}" required>
             </label>
 
             <label for="species">
-                植物品種 <small style="color: var(--pico-del-color);">*必填</small>
+                植物品種 <small class="text-danger">*必填</small>
                 <input type="text" id="species" name="species" value="{{ plant.species if plant else '' }}" required>
             </label>
 
@@ -53,19 +55,19 @@
                        value="{{ plant.planting_date.isoformat() if plant and plant.planting_date else '' }}">
             </label>
 
-            <div id="form-message" style="margin: 1rem 0;"></div>
+            <div id="form-message" class="my-1"></div>
 
             <!-- Loading 指示器（HTMX 自動控制顯示/隱藏）-->
-            <div id="save-loading" class="htmx-indicator" style="text-align: center; padding: 1rem;">
-                <progress indeterminate style="max-width: 200px;"></progress>
-                <p style="margin: 0.5rem 0 0; opacity: 0.7; font-size: 0.9rem;">
+            <div id="save-loading" class="htmx-indicator text-center p-1">
+                <progress indeterminate class="progress-sm"></progress>
+                <p class="loading-text">
                     🧠 正在儲存並生成 AI 人格，請稍候...
                 </p>
             </div>
 
-            <div class="settings-actions">
-                <a href="/" role="button" class="outline secondary">取消</a>
-                <button type="submit" id="save-btn">💾 儲存設定</button>
+            <div class="settings-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <a href="/" role="button" class="outline secondary" style="flex: 1; text-align: center; padding-top: calc(1rem - 2px);">取消</a>
+                <button type="submit" id="save-btn" style="flex: 2; margin-bottom: 0;">💾 儲存設定</button>
             </div>
         </form>
     </article>
