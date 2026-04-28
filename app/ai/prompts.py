@@ -60,9 +60,9 @@ SCHEDULER_ANALYSIS_PROMPT = PromptTemplate(
 JSON 格式範例：
 {{
   "message": "主人的狀態小語",
-  "water_seconds": 1.5 
+  "water_seconds": 1.0 
 }}
-說明：water_seconds 代表建議幫他澆水幾秒。如果不需要澆水（例如土壤很濕或現狀良好），請務必輸出 0.0。最多不超過 3.0 秒。""",
+說明：water_seconds 代表建議幫他澆水幾秒。如果不需要澆水（例如土壤很濕或現狀良好），請務必輸出 0.0。最多不超過 1.5 秒。""",
     variables=[
         "plant_nickname",
         "plant_species",
@@ -157,8 +157,10 @@ WATERING_ADVICE_PROMPT = PromptTemplate(
 土壤濕度：{moisture} %
 環境光照：{lux} Lux
 
+請注意：系統的水泵設定為「2.5 秒約給 80 毫升的水」。請根據植物品種的需水量與當前濕度，決定一個安全的給水秒數 (water_seconds)。對於小型盆栽或怕水的多肉植物，請給予較少的秒數 (如 0.2 ~ 1.0 秒)。
+
 請嚴格以 JSON 格式回傳（不可有任何其他文字）：
-{{"recommend": true或false, "reason": "一句話說明（20字以內，繁體中文）"}}
+{{"recommend": true或false, "reason": "一句話說明（20字以內，繁體中文）", "water_seconds": 浮點數（建議澆水秒數，若不建議則填 0.0）}}
 """,
     variables=["species", "temp", "humidity", "moisture", "lux"],
 )

@@ -100,21 +100,18 @@ async def generate_chat_response(
         nickname = plant.nickname if plant and plant.nickname else "小植"
         base_personality = f"你是一株名為「{nickname}」的可愛植物。你的個性活潑友善。"
 
-    # 獲取最近一筆感測器資料
+    # 獲取最近一筆感測器資料，並與儀表板共用 120 秒斷線判定邏輯
     from app.models import PlantLog
-    from datetime import datetime, timezone, timedelta
+    import time
+    from app.logic.mqtt_service import mqtt_service
     
     sensor_data = None
     if plant:
         latest_log = await PlantLog.filter(plant=plant).order_by("-created_at").first()
         if latest_log and latest_log.soil_moisture is not None:
-            # 只要資料超過 10 分鐘沒有更新，就視為感測器斷線，不傳入 sensor_data
-            now = datetime.now(timezone.utc)
-            log_time = latest_log.created_at
-            if log_time.tzinfo is None:
-                now = now.replace(tzinfo=None)
-                
-            if now - log_time < timedelta(minutes=10):
+            # 只要 MQTT 超過 120 秒未更新，即視為斷線 (與儀表板 /sensors 判定一致)
+            last_update = mqtt_service.latest_update_time.get(plant.id, 0)
+            if last_update > 0 and (time.time() - last_update) < 120:
                 sensor_data = {
                     "temp": latest_log.temperature,
                     "hum": latest_log.humidity,

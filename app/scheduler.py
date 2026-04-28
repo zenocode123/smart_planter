@@ -230,21 +230,25 @@ async def daily_plant_routine():
             topic = f"planter/{plant.mqtt_topic_id}/cmd"
 
             if water_seconds > 0:
-                logger.info(
-                    f"💧 [Scheduler] AI 建議澆水！正在發送 MQTT 指令... 澆水 {water_seconds} 秒"
-                )
-                cmd_payload = {"action": "water", "duration": water_seconds}
-                mqtt_service.client.publish(topic, json.dumps(cmd_payload))
-
-                # [UC12] 紀錄系統澆水行為
-                try:
-                    from app.models import WateringLog
-
-                    await WateringLog.create(
-                        plant=plant, source="system", duration=water_seconds
+                if plant.auto_water:
+                    logger.info(
+                        f"💧 [Scheduler] AI 建議澆水！正在發送 MQTT 指令... 澆水 {water_seconds} 秒"
                     )
-                except Exception as e:
-                    logger.error(f"寫入 WateringLog 失敗: {e}")
+                    cmd_payload = {"action": "water", "duration": water_seconds}
+                    mqtt_service.client.publish(topic, json.dumps(cmd_payload))
+
+                    # [UC12] 紀錄系統澆水行為
+                    try:
+                        from app.models import WateringLog
+
+                        await WateringLog.create(
+                            plant=plant, source="system", duration=water_seconds
+                        )
+                    except Exception as e:
+                        logger.error(f"寫入 WateringLog 失敗: {e}")
+                else:
+                    logger.info(f"🛑 [Scheduler] AI 建議澆水，但使用者的「自動澆水」設定已關閉，僅記錄報表並略過實體給水。")
+                    mqtt_service.client.publish(topic, json.dumps({"emotion": "sleepy"}))
             else:
                 # 不澆水代表狀況不錯，或者是太濕，發送情緒回饋
                 emotion = "happy" if sensor_data.get("moisture", 0) > 30 else "sleepy"

@@ -5,13 +5,14 @@
     <h2 class="text-center">系統登入</h2>
 
     {% if msg %}
-    <dialog id="flash-msg" x-init="$el.showModal(); setTimeout(() => { $el.close() }, 2000)">
-        <article class="text-center {{ 'border-success' if '請先登入' not in msg else 'border-warning' }}">
-            <h3 class="mb-0 {{ 'text-success' if '請先登入' not in msg else 'text-warning' }}">
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition
+        class="toast-notice-container">
+        <article class="toast-notice-card solid-popup-bg {{ '' if '請先登入' not in msg else 'border-warning' }}">
+            <span class="{% if '請先登入' not in msg %}toast-notice-text{% else %}text-warning{% endif %}" style="font-weight: bold;">
                 {{ '✅' if '請先登入' not in msg else '⚠️' }} {{ msg }}
-            </h3>
+            </span>
         </article>
-    </dialog>
+    </div>
     {% endif %}
 
     <form hx-post="/auth/login" hx-target="#auth-message" hx-swap="innerHTML">

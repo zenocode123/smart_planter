@@ -8,7 +8,7 @@ import os
 from tortoise.contrib.fastapi import register_tortoise
 from app.scheduler import init_scheduler
 from app.logic.mqtt_service import mqtt_service
-from app.routers import auth, plants, chat
+from app.routers import auth, plants, chat, system
 from app.auth import NotAuthenticatedHTMX, require_user_htmx
 from app.models import Plant
 from fastapi import status, Depends
@@ -59,6 +59,7 @@ templates = Jinja2Templates(directory="app/templates")
 app.include_router(auth.router)
 app.include_router(plants.router)  # /plants
 app.include_router(chat.router)
+app.include_router(system.router)
 
 # 註冊 Tortoise ORM
 register_tortoise(

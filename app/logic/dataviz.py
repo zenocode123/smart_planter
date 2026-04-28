@@ -71,40 +71,55 @@ async def generate_history_plot(limit: int = 50, plant_id: int = None, end_times
         else:
             df['time'] = df['time'] + pd.Timedelta(hours=8)
         
-        if df.empty or df[['temperature', 'humidity', 'lux']].dropna(how='all').empty:
+        if df.empty or df[['temperature', 'humidity', 'moisture', 'lux']].dropna(how='all').empty:
              return None
 
-        # 開始繪圖
-        fig, ax1 = plt.subplots(figsize=(8, 4))
-        ax1.set_xlabel('Time')
-        ax1.set_ylabel('Temp(℃) / Hum(%)', color='tab:red')
+        # 開始繪圖 (4子圖垂直堆疊)
+        fig, axes = plt.subplots(4, 1, figsize=(8, 8), sharex=True)
         
-        if not df['temperature'].isna().all():
-            ax1.plot(df['time'], df['temperature'], color='tab:red', label='Temp', marker='o', markersize=3)
-        if not df['humidity'].isna().all():
-            ax1.plot(df['time'], df['humidity'], color='tab:blue', label='Hum', marker='s', markersize=3)
-            
-        ax1.tick_params(axis='y', labelcolor='tab:red')
-        ax1.grid(True, linestyle='--', alpha=0.5)
-
+        metrics = [
+            ("temperature", "Temp (℃)", "#ff9800"),
+            ("humidity", "Hum (%)", "#00bcd4"),
+            ("moisture", "Soil (%)", "#4caf50"),
+            ("lux", "Lux", "#ffc107")
+        ]
+        
         import matplotlib.dates as mdates
-
-        ax2 = ax1.twinx()  
-        ax2.set_ylabel('Lux', color='tab:orange')
-        if not df['lux'].isna().all():
-            ax2.plot(df['time'], df['lux'], color='tab:orange', label='Lux', linestyle='dashed', marker='^', markersize=3)
-        ax2.tick_params(axis='y', labelcolor='tab:orange')
+        
+        for ax, (col, ylabel, color) in zip(axes, metrics):
+            if not df[col].isna().all():
+                x = df['time']
+                y = df[col]
+                ax.plot(x, y, color=color, linewidth=2)
+                
+                y_min = y.min(skipna=True)
+                y_min = y_min if pd.notna(y_min) else 0
+                # 若 y 裡面有 NaN，fill_between 會自動斷開，符合我們前面安插的防呆斷點
+                ax.fill_between(x, y, y_min * 0.9, color=color, alpha=0.2)
+            
+            ax.set_ylabel(ylabel, color=color, fontsize=10, weight='bold')
+            ax.tick_params(axis='y', colors=color, labelsize=9)
+            
+            # 美化: 隱藏上/右邊框
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['bottom'].set_color('#aaaaaa')
+            ax.spines['left'].set_color('#aaaaaa')
+            ax.grid(axis='y', linestyle='--', alpha=0.2)
 
         # 解決 X 軸時間標籤過長或擠在一起的問題
-        ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        fig.autofmt_xdate(rotation=45)
+        axes[-1].xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        
+        fig.autofmt_xdate(rotation=0)
+        axes[-1].tick_params(axis='x', colors="#aaaaaa", labelsize=9)
 
-        plt.title(f"Plant Plot {suffix} (Last {len(logs)})")
+        plt.suptitle(f"Trend Analysis {suffix} (Last {len(logs)})", y=0.96, fontsize=12, weight='bold', color='#aaaaaa')
         
         # 將圖表存入記憶體中 (RAM) 而不寫入硬碟
         buf = io.BytesIO()
-        # 使用 bbox_inches='tight' 移除多餘空白點，並提高解析度以填滿容器
-        plt.savefig(buf, format='png', dpi=120, bbox_inches='tight', pad_inches=0.1)
+        # 使用 tight_layout 避免子圖重疊
+        fig.tight_layout(rect=[0, 0, 1, 0.96])
+        plt.savefig(buf, format='png', dpi=120, transparent=True, bbox_inches='tight', pad_inches=0.1)
         plt.close(fig)
         buf.seek(0)
         

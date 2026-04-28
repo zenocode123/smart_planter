@@ -26,6 +26,14 @@ def capture_plant_photo(plant_id: int = 0) -> str | None:
     改為存放在實體資料夾中並加上時間戳記，以保存歷史紀錄。
     回傳用於 API 的虛擬路徑。
     """
+    # 拍照前先強制刪除舊照片，避免相機斷線時被誤抓舊檔
+    latest_path = UPLOAD_DIR / f"latest_plant_{plant_id}.jpg"
+    if latest_path.exists():
+        try:
+            latest_path.unlink()
+        except OSError:
+            pass
+
     current_time = int(time.time())
     filename = f"plant_{plant_id}_{current_time}.jpg"
     file_path = UPLOAD_DIR / filename
