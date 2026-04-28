@@ -17,10 +17,21 @@ from app.models import Plant, PlantLog
 from app.auth import require_user_htmx
 from app.logic.mqtt_service import mqtt_service
 import json
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 
 router = APIRouter(prefix="/plants")
 templates = Jinja2Templates(directory="app/templates")
+
+def _format_localtime(dt: datetime, fmt: str = "%Y-%m-%d %H:%M") -> str:
+    if not dt:
+        return ""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    # Fixed +8 timezone for Taiwan
+    tz_plus_8 = timezone(timedelta(hours=8))
+    return dt.astimezone(tz_plus_8).strftime(fmt)
+
+templates.env.filters["format_localtime"] = _format_localtime
 
 UPDATE_INTERVAL = int(os.getenv("SYSTEM_UPDATE_INTERVAL", "5"))
 WATERING_SECONDS = int(os.getenv("DEFAULT_WATERING_SECONDS", "3"))
@@ -106,6 +117,17 @@ async def water_plant(
     plant = await Plant.first()
     latest_log = await PlantLog.all().order_by("-created_at").first()
 
+    if plant and plant.auto_water:
+        return templates.TemplateResponse(
+            "error_modal.html",
+            {
+                "request": request,
+                "icon": "🔒",
+                "title": "手動給水已鎖定",
+                "message": "系統目前已開啟「自動澆水」，為避免衝突，手動給水功能暫時鎖定。請至「植物設定」關閉自動澆水後再操作。",
+            },
+        )
+
     # 1. 網路斷線防護 (超過 65 秒未收到 MQTT 資料，視為設備離線，拒絕發送指令)
     import time
     if latest_log:
@@ -141,27 +163,27 @@ async def water_plant(
     else:
         t = latest_log.temperature
         if t is None:
-            warnings.append("尚未抓取到『溫度』數據 (Sensor 無回應)。")
+            warnings.append("未偵測到溫度數據。")
         elif t < -20 or t > 60:
-            warnings.append(f"溫度數值明顯異常 ({t}℃)，硬體可能短路或接線錯誤。")
+            warnings.append(f"溫度異常 ({t}℃)。")
 
         h = latest_log.humidity
         if h is None:
-            warnings.append("尚未抓取到『濕度』數據 (Sensor 無回應)。")
+            warnings.append("未偵測到濕度數據。")
         elif h < 0 or h > 100:
-            warnings.append(f"濕度數值不合理 ({h}%)，感測器可能故障。")
+            warnings.append(f"濕度異常 ({h}%)。")
 
         s = latest_log.soil_moisture
         if s is None:
-            warnings.append("尚未抓取到『土壤濕度』數據。")
+            warnings.append("未偵測到土壤濕度。")
         elif s < 0 or s > 100:
-            warnings.append(f"土壤濕度超出正常範圍 ({s}%)，ADC 電壓讀取可能失準。")
+            warnings.append(f"土壤濕度異常 ({s}%)。")
 
         l = latest_log.lux
         if l is None:
-            warnings.append("尚未抓取到『環境光照』數據。")
+            warnings.append("未偵測到光照數據。")
         elif l < 0 or l > 100000:
-            warnings.append(f"光照亮度異常 ({l} lux)，光線感測器可能損壞。")
+            warnings.append(f"光照亮度異常 ({l} lux)。")
 
     if warnings and not force:
         return templates.TemplateResponse(
@@ -229,6 +251,7 @@ async def _get_watering_advice(plant, latest_log) -> dict:
         "moisture": latest_log.soil_moisture if latest_log else None,
         "lux": latest_log.lux if latest_log else None,
         "species": species,
+        "water_seconds": 0.5,
     }
     if not latest_log or not _os.getenv("NVIDIA_NIM_API_KEY"):
         return fallback
@@ -250,6 +273,10 @@ async def _get_watering_advice(plant, latest_log) -> dict:
         parsed = robust_json_parse(raw)
         fallback["recommend"] = bool(parsed.get("recommend", True))
         fallback["reason"] = parsed.get("reason", "AI 判定完成")
+        fallback["water_seconds"] = float(parsed.get("water_seconds", 0.5))
+        
+        # 在終端機印出判斷結果
+        print(f"🤖 [AI 手動澆水判斷] 植物: {species}, 建議: {'澆水' if fallback['recommend'] else '不澆水'}, 秒數: {fallback['water_seconds']} 秒, 理由: {fallback['reason']}")
     except Exception as e:
         import logging
 
@@ -263,7 +290,7 @@ async def _get_watering_advice(plant, latest_log) -> dict:
 # ───────────────────────────────────────
 @router.post("/water/confirm", response_class=Response)
 async def confirm_water_plant(
-    request: Request, user=Depends(require_user_htmx)
+    request: Request, duration: float = Form(0.5), user=Depends(require_user_htmx)
 ) -> Response:
     """彈窗按下確定後的最終給水端點 (動態計算水量)"""
     plant = await Plant.first()
@@ -281,17 +308,10 @@ async def confirm_water_plant(
             status_code=409,
         )
 
-    duration = 1.0
-    if latest_log and latest_log.soil_moisture is not None:
-        soil = latest_log.soil_moisture
-        if soil < 20:
-            duration = 2.5
-        elif soil < 40:
-            duration = 1.5
-        elif soil < 60:
-            duration = 0.8
-        else:
-            duration = 0.5  # 土壤濕的但仍強拉給水 -> 最少量防呆
+    # duration 已經由 HTMX 透過 hx-vals 傳入，也就是 AI 判斷的 water_seconds
+    # 若 duration <= 0，強制防呆給予 0.2 秒最低水量 (避免按了確定卻沒澆水)
+    if duration <= 0:
+        duration = 0.2
 
     import time
 
@@ -619,7 +639,11 @@ async def trigger_manual_report(
         <p style="font-size: 0.85rem; margin-top: 1rem; opacity: 0.8;">由於呼叫 AI 與寄信需要時間，頁面將於 <strong>12 秒後</strong> 自動更新以顯示最新報表。</p>
         <progress indeterminate style="margin-top: 1rem; max-width: 200px;"></progress>
     </div>
-    <!-- 遵守 HTMX 規範，使用延遲觸發器進行局部或全局刷新 -->
-    <div hx-get="/reports" hx-trigger="load delay:12s" hx-target="body"></div>
+    <!-- 避免 HTMX OOB 替換整個 body 時遺失元素的 Bug，直接使用 JS 重新載入頁面 -->
+    <script>
+        setTimeout(function() {
+            window.location.reload();
+        }, 12000);
+    </script>
     """
     return HTMLResponse(content=content)

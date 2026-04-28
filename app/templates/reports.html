@@ -28,7 +28,7 @@
             {% if logs %}
                 {% for log in logs %}
                     <option value="{{ log.id }}">
-                        🕒 {{ log.created_at.strftime('%Y-%m-%d %H:%M') }}
+                        🕒 {{ log.created_at | format_localtime('%Y-%m-%d %H:%M') }}
                     </option>
                 {% endfor %}
             {% else %}
@@ -52,32 +52,6 @@
 
     <!-- OOB 目標：log_fragment.html 的圖表與照片會替換至此 -->
     <div id="chart-photo-target">
-        {% if selected_log %}
-            {% with log=selected_log %}
-                <div class="dashboard-layout mt-2 align-stretch">
-                    <div class="log-col">
-                        <h4 class="text-center mb-1">📊 環境趨勢圖</h4>
-                        <div class="image-box log-image-wrapper align-center">
-                            <img src="/plants/reports/log/{{ log.id }}/chart.png"
-                                alt="History Chart" class="log-image-fit-contain"
-                                onerror="this.onerror=null; this.src='/plants/plots/{{ log.plant_id }}/chart.png?end_timestamp={{ log.created_at.timestamp() }}'">
-                        </div>
-                    </div>
-                    <div class="log-col">
-                        <h4 class="text-center mb-1">📷 最新相片</h4>
-                        <div class="image-box-dark log-image-wrapper align-stretch">
-                            {% if log.photo_blob or log.photo_path %}
-                            <img src="/plants/reports/log/{{ log.id }}/photo.jpg"
-                                alt="Plant Photo" class="log-image-fit-cover"
-                                onerror="this.onerror=null; {% if log.photo_path %}this.src='{{ log.photo_path }}';{% else %}this.closest('.image-box-dark').innerHTML='<div class=\'empty-photo\'>暫無照片</div>';{% endif %}">
-                            {% else %}
-                            <div class="empty-photo">暫無照片</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            {% endwith %}
-        {% endif %}
     </div>
 
 </section>

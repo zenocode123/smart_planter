@@ -5,7 +5,7 @@
 {% if msg %}
 <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)" x-transition
     class="toast-notice-container">
-    <article class="toast-notice-card">
+    <article class="toast-notice-card solid-popup-bg">
         <span class="toast-notice-text">✅ {{ msg }}</span>
     </article>
 </div>
@@ -68,9 +68,16 @@
                 style="display: flex;">
                 <button hx-post="/plants/water" hx-target="#water-modal-container" hx-swap="innerHTML"
                     @click="validating = true" @htmx:after-request="validating = false"
-                    class="contrast btn-large-primary" :disabled="!isConnected || watering || validating"
+                    class="{% if plant and plant.auto_water %}secondary{% else %}contrast{% endif %} btn-large-primary" 
+                    :disabled="!isConnected || watering || validating"
                     style="margin: 0; width: 100%; padding: 0.8rem 1rem;">
-                    <span x-show="!validating">💦 啟動系統澆水</span>
+                    <span x-show="!validating">
+                        {% if plant and plant.auto_water %}
+                        🔒 手動給水 (自動澆水中)
+                        {% else %}
+                        💦 啟動系統澆水
+                        {% endif %}
+                    </span>
                     <span x-show="validating" style="display: none;">⏳ 傳輸中...</span>
                 </button>
             </div>

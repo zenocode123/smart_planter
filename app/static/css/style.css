@@ -375,8 +375,11 @@ button.contrast:active, .chat-send-btn:active, #save-btn:active {
 .text-center { text-align: center; }
 .mb-0 { margin-bottom: 0 !important; }
 .mb-1 { margin-bottom: 1rem; }
+.mt-sm { margin-top: 0.25rem; }
 .mt-1 { margin-top: 1rem; }
+.mt-1-5 { margin-top: 1.5rem; }
 .mt-2 { margin-top: 2rem; }
+.w-100 { width: 100%; }
 
 /* Dashboard Cards / Containers */
 .dashboard-card {
@@ -656,10 +659,19 @@ button.contrast:active, .chat-send-btn:active, #save-btn:active {
     position: fixed; top: 1rem; left: 50%;
     transform: translateX(-50%); z-index: 3000;
 }
+/* 共用實心背景 Utilities */
+.solid-popup-bg {
+    background: #ffffff !important;
+}
+[data-theme="dark"] .solid-popup-bg {
+    background: #181c25 !important;
+}
+
 .toast-notice-card {
     padding: 0.75rem 1.5rem;
     border: 1px solid var(--pico-ins-color);
-    background: var(--pico-card-background-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 .toast-notice-text { color: var(--pico-ins-color); }
 
@@ -765,6 +777,12 @@ button.contrast:active, .chat-send-btn:active, #save-btn:active {
 .btn-danger-outline {
     border-color: var(--pico-del-color) !important;
     color: var(--pico-del-color) !important;
+    background-color: transparent !important;
+}
+.btn-danger {
+    background-color: var(--pico-del-color) !important;
+    border-color: var(--pico-del-color) !important;
+    color: #fff !important;
 }
 
 /* AI Dialog Refactored Classes */
@@ -772,12 +790,10 @@ button.contrast:active, .chat-send-btn:active, #save-btn:active {
     padding: 1.5rem 1.8rem 1.8rem;
     width: 100%;
     max-width: 440px;
-    background: var(--pico-background-color);
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 [data-theme="dark"] .ai-dialog-body {
-    background: #181c25; /* Solid dark background */
     border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
 }

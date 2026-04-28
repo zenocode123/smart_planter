@@ -4,7 +4,7 @@
         <header class="text-primary text-bold log-ai-header">
             <div>🪴 來自 AI 的最新分析</div>
             <span class="text-sm text-muted text-normal">({{
-                log.created_at.strftime('%m-%d %H:%M') if log.created_at else '' }})</span>
+                log.created_at | format_localtime('%m-%d %H:%M') if log.created_at else '' }})</span>
         </header>
         <p class="mb-0 log-ai-text">{{ log.ai_analysis if log.ai_analysis else "AI 正在沉思中，請稍後..." }}</p>
     </div>

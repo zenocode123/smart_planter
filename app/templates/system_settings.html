@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="settings-card fade-in">
+    <div class="page-title text-center mb-2">
+        <h2 class="mb-0">⚙️ 系統設定</h2>
+        <p class="text-muted">設定系統全域參數與自動化行為</p>
+    </div>
+
+    <article>
+        <fieldset>
+            <legend>🤖 自動化控制</legend>
+            <label for="auto_water" class="mt-1">
+                <input type="checkbox" id="auto_water" name="auto_water" role="switch"
+                       hx-post="/system/settings"
+                       hx-trigger="change"
+                       hx-target="#form-message"
+                       {% if not plant or plant.auto_water %}checked{% endif %}>
+                <strong>自動給水 (Auto-Watering)</strong>
+                <p class="text-muted mb-0 text-sm mt-sm">
+                    開啟後，系統會依照 AI 判斷自動驅動抽水馬達給水。<br>
+                    為避免衝突，開啟時會鎖定首頁的「手動給水」按鈕。
+                </p>
+            </label>
+        </fieldset>
+
+        <!-- 用來載入成功或錯誤的 Toast -->
+        <div id="form-message"></div>
+
+        <div class="settings-actions flex-row mt-1-5">
+            <a href="/" role="button" class="outline secondary w-100 text-center">返回首頁</a>
+        </div>
+    </article>
+</section>
+{% endblock %}

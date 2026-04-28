@@ -1,14 +1,13 @@
 <dialog id="water-warning-dialog" open class="ai-dialog-card">
-    <div class="ai-dialog-body">
+    <div class="ai-dialog-body solid-popup-bg">
         <div class="flex-row ai-dialog-header">
             <span class="ai-dialog-icon">🚨</span>
             <div>
                 <h3 class="ai-dialog-title mb-0 text-danger">異常數值 / 系統警告</h3>
-                <p class="ai-dialog-subtitle mb-0 text-danger">系統偵測到感測器或水箱數據異常，不建議澆水</p>
             </div>
         </div>
 
-        <div class="warning-box" style="margin-top: 1rem;">
+        <div class="warning-box" style="margin-top: 1rem; margin-bottom: 1.5rem;">
             <ul class="text-danger m-0 pl-1-5">
                 {% for w in warnings %}
                 <li><strong>{{ w }}</strong></li>
@@ -16,16 +15,14 @@
             </ul>
         </div>
 
-        <p class="text-sm opacity-80" style="margin: 1.5rem 0;">若您認為是感測器故障，仍可選擇「強制啟動安全給水」(限制 1.0 秒水量)，請確認您的動作。</p>
-
         <div class="ai-dialog-actions" style="flex-wrap: wrap;">
-            <!-- 關閉彈窗 -->
-            <button class="outline secondary ai-dialog-btn-cancel mb-0" onclick="document.getElementById('water-warning-dialog').remove(); const o=document.querySelector('[data-water-overlay]'); if(o) o.remove();">
-                ❌ 取消 / 去檢查硬體
+            <!-- 關閉彈窗 (變成紅色危險色) -->
+            <button class="btn-danger ai-dialog-btn-cancel mb-0" onclick="document.getElementById('water-warning-dialog').remove(); const o=document.querySelector('[data-water-overlay]'); if(o) o.remove();">
+                ❌ 取消
             </button>
 
-            <!-- 強制給水 -->
-            <button id="force-water-btn" class="contrast outline btn-danger-outline ai-dialog-btn-confirm mb-0"
+            <!-- 強制給水 (不推薦，改為低調的 outline secondary) -->
+            <button id="force-water-btn" class="outline secondary ai-dialog-btn-confirm mb-0"
                 hx-post="/plants/water?force=true" hx-target="#water-modal-container" hx-swap="innerHTML"
                 hx-on::before-request="this.innerHTML='⏳ 傳送中...'; this.style.opacity='0.7'; this.style.pointerEvents='none';"
                 hx-on::after-request="
@@ -35,11 +32,11 @@
                             const cmdTime = event.detail.xhr.getResponseHeader('X-Command-Time');
                             window.dispatchEvent(new CustomEvent('start-watering-client', {detail: {cmdTime: parseFloat(cmdTime)}}));
                         } else {
-                            this.innerHTML='🚨 忽略警告，強制安全給水';
+                            this.innerHTML='🚨 忽略警告';
                             this.style.opacity='1';
                             this.style.pointerEvents='auto';
                         }">
-                🚨 忽略警告，強制安全給水
+                🚨 忽略警告
             </button>
         </div>
     </div>
