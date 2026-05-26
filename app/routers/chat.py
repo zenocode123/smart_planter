@@ -45,7 +45,7 @@ def _call_nvidia_nim_for_chat(messages_payload: list) -> str:
 @router.get("/", response_class=HTMLResponse)
 async def get_chat_page(request: Request, user=Depends(require_user_htmx)):
     """顯示對話頁面並加載歷史紀錄 (依據特定植物)"""
-    plant = await Plant.first()
+    plant = await Plant.filter(user=user).first()
     if plant:
         messages = await ChatMessage.filter(plant=plant).order_by("created_at")
     else:
@@ -70,7 +70,7 @@ async def post_chat_message(
         return HTMLResponse(content="")
 
     # 1. 直接儲存使用者訊息，並明確綁定到特定植物
-    plant = await Plant.first()
+    plant = await Plant.filter(user=user).first()
     user_msg = await ChatMessage.create(plant=plant, role="user", content=message)
 
     # 2. 回傳使用者片段與 AI 思考中的「自動觸發」佔位符
@@ -93,7 +93,7 @@ async def generate_chat_response(
         return HTMLResponse(content="")
 
     # 獲取植物人格
-    plant = await Plant.first()
+    plant = await Plant.filter(user=user).first()
     if plant and plant.ai_personality:
         base_personality = plant.ai_personality
     else:
