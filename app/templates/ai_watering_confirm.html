@@ -43,11 +43,7 @@
                 hx-on::before-request="this.innerHTML='⏳ 傳送中...'; this.style.opacity='0.7'; this.style.pointerEvents='none';"
                 hx-on::after-request="
                     const d = document.getElementById('ai-watering-dialog'); if(d) d.remove();
-                    const o = document.querySelector('[data-ai-overlay]'); if(o) o.remove();
-                    if(event.detail.successful) {
-                        const cmdTime = event.detail.xhr.getResponseHeader('X-Command-Time');
-                        window.dispatchEvent(new CustomEvent('start-watering-client', {detail: {cmdTime: parseFloat(cmdTime)}}));
-                    }"
+                    const o = document.querySelector('[data-ai-overlay]'); if(o) o.remove();"
             >
                 💦 確定灌溉
             </button>

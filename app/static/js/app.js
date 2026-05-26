@@ -17,8 +17,7 @@ document.addEventListener('alpine:init', () => {
                 if (isWatering) {
                     let attempts = 0;
                     this.wateringStarted = false;
-                    // 記錄開始輪詢前的時間戳 (秒)，用於跟後端 latest_update_time 比較
-                    this.wateringRequestTime = Date.now() / 1000;
+                    this.initialTimestamp = null; // 用來記錄輪詢開始時伺服器的最後更新時間
 
                     const poll = async () => {
                         if (!this.watering) return; // 已經被中斷或完成
@@ -27,9 +26,13 @@ document.addEventListener('alpine:init', () => {
                         try {
                             const resp = await fetch('/plants/watering-status');
                             const data = await resp.json();
+
+                            if (this.initialTimestamp === null) {
+                                this.initialTimestamp = data.timestamp;
+                            }
                             
-                            // 檢查 ESP32 是否有新的狀態被 MQTT 接收到 (更新時間大於我們按鈕按下的時間)
-                            const isNewState = data.timestamp > this.wateringRequestTime;
+                            // 檢查 ESP32 是否有新的狀態被 MQTT 接收到 (伺服器時間戳更新)
+                            const isNewState = data.timestamp > this.initialTimestamp;
 
                             if (data.watering) {
                                 // ESP32 確認開始澆水 (抓到 watering = true)

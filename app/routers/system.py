@@ -11,7 +11,7 @@ templates = Jinja2Templates(directory="app/templates")
 @router.get("/settings", response_class=HTMLResponse)
 async def get_system_settings(request: Request, user=Depends(require_user_htmx)):
     """顯示系統設定頁面"""
-    plant = await Plant.first()
+    plant = await Plant.filter(user=user).first()
     return templates.TemplateResponse(
         "system_settings.html",
         {
@@ -28,7 +28,7 @@ async def post_system_settings(
     auto_water: bool = Form(False)
 ):
     """儲存系統設定 (例如自動澆水)"""
-    plant = await Plant.first()
+    plant = await Plant.filter(user=user).first()
     if plant:
         plant.auto_water = auto_water
         await plant.save()

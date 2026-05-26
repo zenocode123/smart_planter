@@ -129,12 +129,11 @@ async def generate_history_plot(limit: int = 50, plant_id: int = None, end_times
         print(f"❌ [DataViz] 繪製趨勢圖失敗: {e}")
         return None
 
-async def generate_metric_chart(metric: str) -> io.BytesIO | None:
+async def generate_metric_chart(metric: str, plant) -> io.BytesIO | None:
     """回傳指定的指摽歷時資料漸層面積圖"""
     import matplotlib.dates as mdates
-    from app.models import PlantLog, Plant
+    from app.models import PlantLog
     
-    plant = await Plant.first()
     if not plant:
         return None
     
@@ -196,12 +195,11 @@ async def generate_metric_chart(metric: str) -> io.BytesIO | None:
     buf.seek(0)
     return buf
 
-async def generate_moisture_chart() -> io.BytesIO | None:
+async def generate_moisture_chart(plant) -> io.BytesIO | None:
     """回傳土壤濕度折線圖，並疊加上澆水紀錄的水滴標記"""
     import matplotlib.dates as mdates
-    from app.models import PlantLog, Plant, WateringLog
+    from app.models import PlantLog, WateringLog
     
-    plant = await Plant.first()
     if not plant:
         return None
     

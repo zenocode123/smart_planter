@@ -22,6 +22,7 @@ from datetime import datetime, date, timezone, timedelta
 router = APIRouter(prefix="/plants")
 templates = Jinja2Templates(directory="app/templates")
 
+
 def _format_localtime(dt: datetime, fmt: str = "%Y-%m-%d %H:%M") -> str:
     if not dt:
         return ""
@@ -30,6 +31,7 @@ def _format_localtime(dt: datetime, fmt: str = "%Y-%m-%d %H:%M") -> str:
     # Fixed +8 timezone for Taiwan
     tz_plus_8 = timezone(timedelta(hours=8))
     return dt.astimezone(tz_plus_8).strftime(fmt)
+
 
 templates.env.filters["format_localtime"] = _format_localtime
 
@@ -48,10 +50,10 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 
 
 @router.get("/watering-status", response_class=JSONResponse)
-async def watering_status() -> JSONResponse:
+async def watering_status(user=Depends(require_user_htmx)) -> JSONResponse:
     """超輕量端點：只回傳澆水狀態，供前端高頻輪詢使用 (不讀取耗時資料庫連線或重繪 DOM)"""
-    # 使用 Plant.first().id（純整數），不用 latest_log.plant_id（Tortoise FK 欄位型別不穩定）
-    plant = await Plant.first()
+    # 使用 Plant.filter(user=user).first()
+    plant = await Plant.filter(user=user).first()
     watering = False
     timestamp = 0
     if plant:
@@ -61,12 +63,15 @@ async def watering_status() -> JSONResponse:
 
 
 @router.get("/sensors", response_class=HTMLResponse)
-async def get_sensor_data(request: Request) -> HTMLResponse:
+async def get_sensor_data(
+    request: Request, user=Depends(require_user_htmx)
+) -> HTMLResponse:
     """供 HTMX 定期調用的感測器數據片段 (從資料庫獲取最新一筆)"""
-    latest_log = await PlantLog.all().order_by("-created_at").first()
+    latest_log = await PlantLog.filter(plant__user=user).order_by("-created_at").first()
 
     # 透過時間差判斷最近是否活躍連線 (120 秒內有真實 MQTT 資料)
     import time
+
     status = "disconnected"
     if latest_log:
         last_update = mqtt_service.latest_update_time.get(latest_log.plant_id, 0)
@@ -92,7 +97,9 @@ async def get_sensor_data(request: Request) -> HTMLResponse:
     if latest_log:
         last_update = mqtt_service.latest_update_time.get(latest_log.plant_id, 0)
         if last_update > 0:
-            update_time_str = datetime.fromtimestamp(last_update).strftime("%Y/%m/%d %H:%M:%S")
+            update_time_str = datetime.fromtimestamp(last_update).strftime(
+                "%Y/%m/%d %H:%M:%S"
+            )
         else:
             dt = latest_log.created_at
             if dt.tzinfo is None:
@@ -114,8 +121,8 @@ async def water_plant(
     request: Request, force: bool = False, user=Depends(require_user_htmx)
 ) -> Response:
     """觸發 ESP32 執行澆水動作 (透過 MQTT)，並加入硬體異常數值防呆"""
-    plant = await Plant.first()
-    latest_log = await PlantLog.all().order_by("-created_at").first()
+    plant = await Plant.filter(user=user).first()
+    latest_log = await PlantLog.filter(plant__user=user).order_by("-created_at").first()
 
     if plant and plant.auto_water:
         return templates.TemplateResponse(
@@ -130,6 +137,7 @@ async def water_plant(
 
     # 1. 網路斷線防護 (超過 65 秒未收到 MQTT 資料，視為設備離線，拒絕發送指令)
     import time
+
     if latest_log:
         last_update = mqtt_service.latest_update_time.get(latest_log.plant_id, 0)
         diff_seconds = time.time() - last_update if last_update > 0 else 999
@@ -200,10 +208,13 @@ async def water_plant(
             mqtt_service.client.publish(
                 topic, json.dumps({"action": "water", "duration": 1.0})
             )
-        # 回傳 204，前端 hx-on::after-request 收到後會 dispatch start-watering-client
-        resp = Response(status_code=204)
-        resp.headers["X-Command-Time"] = str(cmd_time)
-        return resp
+        # 回傳 204，並透過 HX-Trigger 觸發前端事件
+        headers = {
+            "HX-Trigger": json.dumps({
+                "start-watering-client": {"cmdTime": cmd_time}
+            })
+        }
+        return Response(status_code=204, headers=headers)
 
     # 4b. 數據無異常 -> 呼叫 AI 諮詢（加上 timeout 保護避免卡死）
     advice = await _get_watering_advice(plant, latest_log)
@@ -274,9 +285,11 @@ async def _get_watering_advice(plant, latest_log) -> dict:
         fallback["recommend"] = bool(parsed.get("recommend", True))
         fallback["reason"] = parsed.get("reason", "AI 判定完成")
         fallback["water_seconds"] = float(parsed.get("water_seconds", 0.5))
-        
+
         # 在終端機印出判斷結果
-        print(f"🤖 [AI 手動澆水判斷] 植物: {species}, 建議: {'澆水' if fallback['recommend'] else '不澆水'}, 秒數: {fallback['water_seconds']} 秒, 理由: {fallback['reason']}")
+        print(
+            f"🤖 [AI 手動澆水判斷] 植物: {species}, 建議: {'澆水' if fallback['recommend'] else '不澆水'}, 秒數: {fallback['water_seconds']} 秒, 理由: {fallback['reason']}"
+        )
     except Exception as e:
         import logging
 
@@ -293,8 +306,8 @@ async def confirm_water_plant(
     request: Request, duration: float = Form(0.5), user=Depends(require_user_htmx)
 ) -> Response:
     """彈窗按下確定後的最終給水端點 (動態計算水量)"""
-    plant = await Plant.first()
-    latest_log = await PlantLog.all().order_by("-created_at").first()
+    plant = await Plant.filter(user=user).first()
+    latest_log = await PlantLog.filter(plant__user=user).order_by("-created_at").first()
 
     if plant and mqtt_service.latest_water_empty.get(plant.id, False):
         return templates.TemplateResponse(
@@ -330,9 +343,12 @@ async def confirm_water_plant(
         except Exception as e:
             print(f"寫入 WateringLog 失敗: {e}")
 
-    resp = Response(status_code=204)
-    resp.headers["X-Command-Time"] = str(cmd_time)
-    return resp
+    headers = {
+        "HX-Trigger": json.dumps({
+            "start-watering-client": {"cmdTime": cmd_time}
+        })
+    }
+    return Response(status_code=204, headers=headers)
 
 
 # ───────────────────────────────────────
@@ -366,7 +382,7 @@ async def get_plant_profile(
     request: Request, user=Depends(require_user_htmx)
 ) -> HTMLResponse:
     """[UC03] 顯示植物檔案設定頁面"""
-    plant = await Plant.first()
+    plant = await Plant.filter(user=user).first()
     return templates.TemplateResponse(
         "plant_settings.html",
         {
@@ -410,7 +426,7 @@ async def post_plant_profile(
     species_changed: bool = False
     is_new_plant: bool = False
     try:
-        plant = await Plant.first()
+        plant = await Plant.filter(user=user).first()
         if plant:
             species_changed = plant.species != plant_in.species
             plant.nickname = plant_in.nickname
@@ -419,9 +435,11 @@ async def post_plant_profile(
             await plant.save()
         else:
             is_new_plant = True
-            plant = await Plant.create(**plant_in.dict())
+            plant_data = plant_in.dict()
+            plant_data["user_id"] = user.id
+            plant = await Plant.create(**plant_data)
             # 確保新植物能與預設的 ESP32 對接
-            plant.mqtt_topic_id = "p001"
+            plant.mqtt_topic_id = "planter_01"
             await plant.save()
     except Exception as e:
         return HTMLResponse(
@@ -472,7 +490,7 @@ async def upload_plant_photo(
     file_path.write_bytes(contents)
 
     relative_path = f"/static/uploads/plants/{filename}"
-    plant = await Plant.first()
+    plant = await Plant.filter(user=user).first()
     if plant:
         if plant.photo_path:
             old_file = Path("app" + plant.photo_path)
@@ -482,7 +500,7 @@ async def upload_plant_photo(
         await plant.save()
     else:
         await Plant.create(
-            nickname="我的植物", species="未設定", photo_path=relative_path
+            nickname="我的植物", species="未設定", photo_path=relative_path, user=user
         )
 
     return templates.TemplateResponse(
@@ -518,15 +536,19 @@ async def get_modal_chart_fragment(metric: str):
 
 
 @router.get("/plots/modal/{metric}.png")
-async def get_modal_chart_image(metric: str):
+async def get_modal_chart_image(metric: str, user=Depends(require_user_htmx)):
     """回傳專為 Modal 設計的視覺化極簡圖表 (模擬資料)"""
     from app.logic.dataviz import generate_metric_chart, generate_moisture_chart
     from fastapi import Response, HTTPException
 
+    plant = await Plant.filter(user=user).first()
+    if not plant:
+        raise HTTPException(status_code=404, detail="Plant not found")
+
     if metric == "moisture":
-        buf = await generate_moisture_chart()
+        buf = await generate_moisture_chart(plant)
     else:
-        buf = await generate_metric_chart(metric)
+        buf = await generate_metric_chart(metric, plant)
 
     if not buf:
         raise HTTPException(status_code=404, detail="Plot generation failed")
@@ -534,17 +556,23 @@ async def get_modal_chart_image(metric: str):
 
 
 @router.get("/plots/{plant_id}/chart.png")
-async def get_plant_history_chart(plant_id: int, end_timestamp: float = None):
+async def get_plant_history_chart(
+    plant_id: int, user=Depends(require_user_htmx), end_timestamp: float = None
+):
     """即時自資料庫撈取資料，並在 RAM 中繪製回傳 PNG，完全不寫入硬碟以保護 SD 卡"""
     from app.logic.dataviz import generate_history_plot
     from fastapi import Response, HTTPException
 
-    buf = await generate_history_plot(limit=50, plant_id=plant_id, end_timestamp=end_timestamp)
+    plant = await Plant.get_or_none(id=plant_id, user=user)
+    if not plant:
+        raise HTTPException(status_code=404, detail="Plant not found or access denied")
+
+    buf = await generate_history_plot(
+        limit=50, plant_id=plant_id, end_timestamp=end_timestamp
+    )
     if not buf:
         raise HTTPException(status_code=404, detail="Plot generation failed or no data")
     return Response(content=buf.getvalue(), media_type="image/png")
-
-
 
 
 # ── UC10：定時排程紀錄展示 ──
@@ -560,7 +588,7 @@ async def get_latest_log(
     from app.models import PlantLog
 
     latest_log = (
-        await PlantLog.filter(ai_analysis__isnull=False)
+        await PlantLog.filter(plant__user=user, ai_analysis__isnull=False)
         .exclude(ai_analysis="")
         .order_by("-created_at")
         .first()
@@ -578,7 +606,7 @@ async def get_reports_page(
 
     # 只列出有 AI 分析的健檢紀錄，排除 MQTT 即時傳入的純感測 log
     logs = (
-        await PlantLog.filter(ai_analysis__isnull=False)
+        await PlantLog.filter(plant__user=user, ai_analysis__isnull=False)
         .exclude(ai_analysis="")
         .order_by("-created_at")
     )
@@ -595,31 +623,31 @@ async def get_report_detail(
 ) -> HTMLResponse:
     from app.models import PlantLog
 
-    log = await PlantLog.get_or_none(id=log_id)
+    log = await PlantLog.get_or_none(id=log_id, plant__user=user)
     return templates.TemplateResponse(
         "log_fragment.html", {"request": request, "log": log}
     )
 
 
 @router.get("/reports/log/{log_id}/chart.png")
-async def get_report_log_chart(log_id: int):
+async def get_report_log_chart(log_id: int, user=Depends(require_user_htmx)):
     """回傳特定 PlantLog 紀錄的趨勢圖快照（從 chart_blob 讀取）"""
     from app.models import PlantLog
     from fastapi import HTTPException
 
-    log = await PlantLog.get_or_none(id=log_id)
+    log = await PlantLog.get_or_none(id=log_id, plant__user=user)
     if not log or not log.chart_blob:
         raise HTTPException(status_code=404, detail="此紀錄沒有趨勢圖快照")
     return Response(content=bytes(log.chart_blob), media_type="image/png")
 
 
 @router.get("/reports/log/{log_id}/photo.jpg")
-async def get_report_log_photo(log_id: int):
+async def get_report_log_photo(log_id: int, user=Depends(require_user_htmx)):
     """回傳特定 PlantLog 紀錄的植物照片快照（從 photo_blob 讀取）"""
     from app.models import PlantLog
     from fastapi import HTTPException
 
-    log = await PlantLog.get_or_none(id=log_id)
+    log = await PlantLog.get_or_none(id=log_id, plant__user=user)
     if not log or not log.photo_blob:
         raise HTTPException(status_code=404, detail="此紀錄沒有照片快照")
     return Response(content=bytes(log.photo_blob), media_type="image/jpeg")
